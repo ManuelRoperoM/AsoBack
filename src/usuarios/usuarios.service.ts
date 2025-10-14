@@ -36,5 +36,10 @@ export class UsuariosService {
     const user = await this.obtenerPorId(id);
     return this.usuarioRepo.remove(user);
   }
-}
 
+  async userPorCorreo(email: string) {
+    const user = await this.usuarioRepo.findOne({ where: { correo: email } });
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+    return user;
+  }
+}

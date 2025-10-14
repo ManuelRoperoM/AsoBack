@@ -10,6 +10,8 @@ import { RolesModule } from './roles/roles.module';
 import { TramiteEstadosModule } from './tramite-estados/tramite-estados.module';
 import { TramitesModule } from './tramites/tramites.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
+import { AuthModule } from './auth/auth.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { UsuariosModule } from './usuarios/usuarios.module';
     DocumentosModule,
     TramiteEstadosModule,
     ObservacionesModule,
+    AuthModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

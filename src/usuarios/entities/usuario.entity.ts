@@ -32,4 +32,3 @@ export class Usuario {
   @OneToMany(() => Historial, (hist) => hist.usuario)
   historial: Historial[];
 }
-

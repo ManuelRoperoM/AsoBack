@@ -6,7 +6,7 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-    // ✅ Activa validaciones globales en todos los DTOs
+  // ✅ Activa validaciones globales en todos los DTOs
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // elimina campos que no estén en el DTO

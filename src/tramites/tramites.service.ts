@@ -19,16 +19,23 @@ export class TramitesService {
     @InjectRepository(Usuario) private userRepo: Repository<Usuario>,
     @InjectRepository(Historial) private historialRepo: Repository<Historial>,
     @InjectRepository(Observacion) private obsRepo: Repository<Observacion>,
-    @InjectRepository(TramiteEstado) private estadoRepo: Repository<TramiteEstado>,
+    @InjectRepository(TramiteEstado)
+    private estadoRepo: Repository<TramiteEstado>,
     @InjectRepository(Ciudad) private ciudadRepo: Repository<Ciudad>,
   ) {}
 
   async crear(dto: CreateTramiteDto) {
-    const solicitante = await this.userRepo.findOne({ where: { id_usuario: dto.solicitanteId } });
+    const solicitante = await this.userRepo.findOne({
+      where: { id_usuario: dto.solicitanteId },
+    });
     if (!solicitante) throw new NotFoundException('Solicitante no encontrado');
 
-    const ciudad = dto.ciudadId ? await this.ciudadRepo.findOne({ where: { id_ciudad: dto.ciudadId } }) : null;
-    const estadoInicial = await this.estadoRepo.findOne({ where: { nombre: 'RADICADO' } });
+    const ciudad = dto.ciudadId
+      ? await this.ciudadRepo.findOne({ where: { id_ciudad: dto.ciudadId } })
+      : null;
+    const estadoInicial = await this.estadoRepo.findOne({
+      where: { nombre: 'RADICADO' },
+    });
 
     const tramite = this.tramiteRepo.create({
       titulo: dto.titulo,
@@ -53,18 +60,39 @@ export class TramitesService {
   }
 
   async listar() {
-    return this.tramiteRepo.find({ relations: ['solicitante', 'gestorAsignado', 'ciudad', 'observaciones', 'historial', 'estadoEntity'] });
+    return this.tramiteRepo.find({
+      relations: [
+        'solicitante',
+        'gestorAsignado',
+        'ciudad',
+        'observaciones',
+        'historial',
+        'estadoEntity',
+      ],
+    });
   }
 
   async obtenerPorId(id: number) {
-    const tramite = await this.tramiteRepo.findOne({ where: { id_tramite: id }, relations: ['solicitante', 'gestorAsignado', 'ciudad', 'observaciones', 'historial', 'estadoEntity'] });
+    const tramite = await this.tramiteRepo.findOne({
+      where: { id_tramite: id },
+      relations: [
+        'solicitante',
+        'gestorAsignado',
+        'ciudad',
+        'observaciones',
+        'historial',
+        'estadoEntity',
+      ],
+    });
     if (!tramite) throw new NotFoundException('Trámite no encontrado');
     return tramite;
   }
 
   async asignarGestor(id: number, dto: AsignarGestorDto) {
     const tramite = await this.obtenerPorId(id);
-    const gestor = await this.userRepo.findOne({ where: { id_usuario: dto.gestorId } });
+    const gestor = await this.userRepo.findOne({
+      where: { id_usuario: dto.gestorId },
+    });
     if (!gestor) throw new NotFoundException('Gestor no encontrado');
 
     tramite.gestorAsignado = gestor;
@@ -82,11 +110,15 @@ export class TramitesService {
 
   async cambiarEstado(id: number, dto: CambiarEstadoDto) {
     const tramite = await this.obtenerPorId(id);
-    const usuario = await this.userRepo.findOne({ where: { id_usuario: dto.usuarioId } });
+    const usuario = await this.userRepo.findOne({
+      where: { id_usuario: dto.usuarioId },
+    });
     if (!usuario) throw new NotFoundException('Usuario no encontrado');
 
     const nuevoEstado = dto.nuevoEstado;
-    const estadoEntity = await this.estadoRepo.findOne({ where: { nombre: nuevoEstado } });
+    const estadoEntity = await this.estadoRepo.findOne({
+      where: { nombre: nuevoEstado },
+    });
     tramite.estado = nuevoEstado;
     if (estadoEntity) tramite.estadoEntity = estadoEntity;
 
@@ -104,10 +136,14 @@ export class TramitesService {
 
   async agregarObservacion(id: number, dto: AgregarObservacionDto) {
     const tramite = await this.obtenerPorId(id);
-    const autor = await this.userRepo.findOne({ where: { id_usuario: dto.autorId } });
+    const autor = await this.userRepo.findOne({
+      where: { id_usuario: dto.autorId },
+    });
     if (!autor) throw new NotFoundException('Usuario no encontrado');
 
-    const estadoEntity = dto.estadoId ? await this.estadoRepo.findOne({ where: { id_estado: dto.estadoId } }) : null;
+    const estadoEntity = dto.estadoId
+      ? await this.estadoRepo.findOne({ where: { id_estado: dto.estadoId } })
+      : null;
 
     const obs = this.obsRepo.create({
       tramite,
@@ -128,4 +164,3 @@ export class TramitesService {
     return obs;
   }
 }
-

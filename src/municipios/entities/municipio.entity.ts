@@ -12,4 +12,3 @@ export class Municipio {
   @OneToMany(() => Ciudad, (c) => c.municipio)
   ciudades: Ciudad[];
 }
-
