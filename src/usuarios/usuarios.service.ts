@@ -2,6 +2,10 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
+  HttpException,
+  ForbiddenException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,6 +16,7 @@ import * as bcrypt from 'bcrypt';
 import * as nodemailer from 'nodemailer';
 import { randomBytes } from 'crypto';
 import { resetPasswordTemplate } from '../templates/email';
+import { createUserTemplate } from '../templates/createUser';
 
 @Injectable()
 export class UsuariosService {
@@ -29,9 +34,88 @@ export class UsuariosService {
     });
   }
 
-  async crear(dto: CreateUsuarioDto) {
-    const usuario = this.usuarioRepo.create(dto);
-    return this.usuarioRepo.save(usuario);
+  async crear({ nombre, correo, password }: CreateUsuarioDto) {
+    try {
+      const existUser = await this.usuarioRepo.findOne({ where: { correo } });
+
+      if (existUser)
+        throw new ConflictException(
+          `Ya existe un usuario con el correo ${correo}`,
+        );
+
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+      const usuario = this.usuarioRepo.create({
+        nombre,
+        correo,
+        password: hashedPassword,
+        rol: 'CIUDADANO',
+      });
+      const {
+        nombre: createdUser,
+        correo: createdCorreo,
+        rol: createdRol,
+      } = await this.usuarioRepo.save(usuario);
+      return { nombre: createdUser, correo: createdCorreo, rol: createdRol };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async crearDesdeAdmin(adminUser: any, dto: any) {
+    try {
+      if (adminUser.rol !== 'ADMIN') {
+        throw new ForbiddenException('No tienes permisos para crear usuarios');
+      }
+
+      const { nombre, correo, rol } = dto;
+
+      const existUser = await this.usuarioRepo.findOne({ where: { correo } });
+      if (existUser) {
+        throw new ConflictException(
+          `Ya existe un usuario con el correo ${correo}`,
+        );
+      }
+
+      const nuevaClave = randomBytes(4).toString('hex');
+      const hashedPassword = await bcrypt.hash(nuevaClave, 10);
+
+      const usuario = this.usuarioRepo.create({
+        nombre,
+        correo,
+        password: hashedPassword,
+        rol: rol || 'CIUDADANO',
+      });
+
+      const savedUser = await this.usuarioRepo.save(usuario);
+
+      const html = createUserTemplate
+        .replace('{{nombre}}', savedUser.nombre)
+        .replace('{{correo}}', savedUser.correo)
+        .replace('{{nueva_contrasena}}', nuevaClave)
+        .replace('{{año}}', new Date().getFullYear().toString())
+        .replace('{{sitio}}', 'https://asomunicipios.com');
+
+      await this.sendMail(
+        savedUser.correo,
+        'Tu cuenta ha sido creada - Asomunicipios',
+        html,
+      );
+
+      return {
+        message: 'Usuario creado y correo enviado correctamente',
+        usuario: {
+          id: savedUser.id_usuario,
+          nombre: savedUser.nombre,
+          correo: savedUser.correo,
+          rol: savedUser.rol,
+        },
+      };
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new InternalServerErrorException(error.message);
+    }
   }
 
   async listar() {
@@ -61,9 +145,11 @@ export class UsuariosService {
     return user;
   }
 
-  async cambiarUserPassword(id: number, newPass: string) {
+  async cambiarUserPassword(id_user: number, newPass: string) {
     try {
-      const user = await this.obtenerPorId(id);
+      const userUpdate = await this.obtenerPorId(id_user);
+
+      if (!userUpdate) throw new NotFoundException('Usuario no encontrado');
 
       if (!newPass || newPass.trim() === '') {
         throw new BadRequestException(
@@ -74,8 +160,8 @@ export class UsuariosService {
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(newPass, saltRounds);
 
-      user.password = hashedPassword;
-      await this.usuarioRepo.save(user);
+      userUpdate.password = hashedPassword;
+      await this.usuarioRepo.save(userUpdate);
 
       return {
         message: 'Contraseña actualizada correctamente',
