@@ -11,7 +11,7 @@ export class CiudadesService {
   constructor(
     @InjectRepository(Ciudades)
     private repo: Repository<Ciudades>,
-  ) { }
+  ) {}
 
   create(dto: CreateCiudadesDto) {
     return this.repo.save(dto);

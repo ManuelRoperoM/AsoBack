@@ -5,9 +5,9 @@ import { TramitesTiposService } from './tramites_tipos.service';
 import { TramitesTiposController } from './tramites_tipos.controller';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([TramitesTipos])],
-    controllers: [TramitesTiposController],
-    providers: [TramitesTiposService],
-    exports: [TramitesTiposService],
+  imports: [TypeOrmModule.forFeature([TramitesTipos])],
+  controllers: [TramitesTiposController],
+  providers: [TramitesTiposService],
+  exports: [TramitesTiposService],
 })
 export class TramitesTiposModule {}

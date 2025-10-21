@@ -10,10 +10,7 @@ import {
 import { SolicitantesTiposService } from './solicitantes_tipos.service';
 import { CreateSolicitantesTiposDto } from './dto/create-solicitantes_tipos.dto';
 import { UpdateSolicitantesTiposDto } from './dto/update-solicitantes_tipos.dto';
-import {
-  successResponse,
-  errorResponse,
-} from '../common/response/response.helper';
+import { errorResponse } from '../common/response/response.helper';
 
 @Controller('solicitantes_tipos')
 export class SolicitantesTiposController {

@@ -11,10 +11,7 @@ import { TramitesRelacionService } from './tramites_relacion.service';
 import { CreateTramitesRelacionDto } from './dto/create-tramites_relacion.dto';
 import { UpdateTramitesRelacionDto } from './dto/update-tramites_relacion.dto';
 
-import {
-  successResponse,
-  errorResponse,
-} from '../common/response/response.helper';
+import { errorResponse } from '../common/response/response.helper';
 
 @Controller('tramites_relacion')
 export class TramitesRelacionController {

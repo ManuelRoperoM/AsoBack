@@ -12,10 +12,7 @@ import {
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
-import {
-  successResponse,
-  errorResponse,
-} from '../common/response/response.helper';
+import { errorResponse } from '../common/response/response.helper';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CreateUsuarioFromAdminDto } from './dto/create-usuario-from-admin.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -55,7 +52,6 @@ export class UsuariosController {
   obtenerPorId(@Param('id') id: number) {
     return this.usuariosService.obtenerPorId(+id);
   }
-
 
   @UseGuards(JwtAuthGuard)
   @Post('edit-password')

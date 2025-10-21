@@ -25,4 +25,3 @@ export class DocumentosController {
     return this.documentosService.eliminar(+id);
   }
 }
-

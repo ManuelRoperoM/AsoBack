@@ -10,14 +10,11 @@ import {
 import { CiudadesService } from './ciudades.service';
 import { CreateCiudadesDto } from './dto/create-ciudades.dto';
 import { UpdateCiudadesDto } from './dto/update-ciudades.dto';
-import {
-  successResponse,
-  errorResponse,
-} from '../common/response/response.helper';
+import { errorResponse } from '../common/response/response.helper';
 
 @Controller('ciudades')
 export class CiudadesController {
-  constructor(private readonly service: CiudadesService) { }
+  constructor(private readonly service: CiudadesService) {}
 
   @Post()
   create(@Body() dto: CreateCiudadesDto) {
