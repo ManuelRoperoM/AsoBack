@@ -39,6 +39,8 @@ import { SolicitantesTiposModule } from './solicitantes_tipos/solicitantes_tipos
         extra: {
           charset: 'utf8mb4_unicode_ci',
         },
+        logging: true, // 🔍 importante
+        logger: 'advanced-console',
       }),
     }),
 
