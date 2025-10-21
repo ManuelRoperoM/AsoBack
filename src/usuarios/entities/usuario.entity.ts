@@ -26,6 +26,7 @@ export class Usuario {
       'FUNCIONARIO',
       'SUPERVISOR',
       'ATENCION',
+      'CIUDADANO',
     ],
     default: 'USER',
   })

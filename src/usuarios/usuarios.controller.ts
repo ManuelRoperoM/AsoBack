@@ -18,6 +18,7 @@ import {
 } from '../common/response/response.helper';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CreateUsuarioFromAdminDto } from './dto/create-usuario-from-admin.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('usuarios')
 export class UsuariosController {
@@ -55,6 +56,14 @@ export class UsuariosController {
     return this.usuariosService.obtenerPorId(+id);
   }
 
+
+  @UseGuards(JwtAuthGuard)
+  @Post('edit-password')
+  changePassword(@Req() req, @Body() dto: ChangePasswordDto) {
+    const id_user = req.user.id_usuario;
+    return this.usuariosService.cambiarUserPassword(id_user, dto.newPass);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Put(':id')
   actualizar(@Param('id') id: number, @Body() dto: UpdateUsuarioDto) {
@@ -65,5 +74,10 @@ export class UsuariosController {
   @Delete(':id')
   eliminar(@Param('id') id: number) {
     return this.usuariosService.eliminar(+id);
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body('correo') correo: string) {
+    return this.usuariosService.updateNewPass(correo);
   }
 }

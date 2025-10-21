@@ -18,14 +18,4 @@ export class CreateUsuarioDto {
   @MinLength(6)
   password: string;
 
-  @IsEnum([
-    'ADMIN',
-    'GESTOR',
-    'USER',
-    'COORDINADOR',
-    'FUNCIONARIO',
-    'SUPERVISOR',
-    'ATENCION',
-  ])
-  rol?: string; // ADMIN | GESTOR | CIUDADANO
 }
