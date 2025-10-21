@@ -1,42 +1,83 @@
-import { Controller, Post, Body, Get, Param, Put } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { TramitesService } from './tramites.service';
-import { CreateTramiteDto } from './dto/create-tramite.dto';
-import { AsignarGestorDto } from './dto/asignar-gestor.dto';
-import { CambiarEstadoDto } from './dto/cambiar-estado.dto';
-import { AgregarObservacionDto } from './dto/agregar-observacion.dto';
+import { CreateTramiteDto } from './dto/create-tramites.dto';
+
+import { errorResponse } from '../common/response/response.helper';
 
 @Controller('tramites')
 export class TramitesController {
   constructor(private readonly tramitesService: TramitesService) {}
 
   @Post()
-  crearTramite(@Body() dto: CreateTramiteDto) {
-    return this.tramitesService.crear(dto);
+  create(@Body() dto: CreateTramiteDto) {
+    return this.tramitesService.create(dto);
   }
 
+  // @Post()
+  // create(@Req() req, @Body() dto: any) {
+  //   console.log('RAW BODY:', req.body);
+  //   console.log('DTO:', dto);
+  // }
+
   @Get()
-  listar() {
-    return this.tramitesService.listar();
+  async findAll() {
+    try {
+      return await this.tramitesService.findAll();
+    } catch (error) {
+      return errorResponse(
+        'Error al obtener los registros',
+        500,
+        error.message,
+      );
+    }
   }
 
   @Get(':id')
-  obtener(@Param('id') id: number) {
-    return this.tramitesService.obtenerPorId(+id);
+  findOne(@Param('id') id: number) {
+    return this.tramitesService.findOne(+id);
+  }
+  //................
+  /**
+   * ✅ Actualiza el estado de un trámite y registra la trazabilidad
+   */
+  @Put(':id/estado')
+  async actualizarEstado(
+    @Param('id', ParseIntPipe) id: number,
+    @Body()
+    body: {
+      estado: string;
+      gestorAsignadoId?: number;
+      observacion?: string;
+      usuarioLogueado: {
+        id: number;
+        nombre: string;
+        correo: string;
+        rol: string;
+      };
+    },
+  ) {
+    return this.tramitesService.actualizarEstado(
+      id,
+      {
+        estado: body.estado,
+        gestorAsignadoId: body.gestorAsignadoId,
+        observacion: body.observacion,
+      },
+      body.usuarioLogueado, // 👈 Usuario simulado (por ahora)
+    );
   }
 
-  @Put(':id/asignar-gestor')
-  asignarGestor(@Param('id') id: number, @Body() dto: AsignarGestorDto) {
-    return this.tramitesService.asignarGestor(+id, dto);
+  @Get(':id/trazabilidad')
+  async obtenerHistorial(@Param('id') id: number) {
+    return this.tramitesService.obtenerTrazabilidadPorTramite(id);
   }
-
-  @Put(':id/cambiar-estado')
-  cambiarEstado(@Param('id') id: number, @Body() dto: CambiarEstadoDto) {
-    return this.tramitesService.cambiarEstado(+id, dto);
-  }
-
-  @Post(':id/observaciones')
-  agregarObservacion(@Param('id') id: number, @Body() dto: AgregarObservacionDto) {
-    return this.tramitesService.agregarObservacion(+id, dto);
-  }
+  //.................
 }
-

@@ -1,7 +1,19 @@
-import { Controller, Post, Body, Get, Param, Put, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Put,
+  Delete,
+} from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import {
+  successResponse,
+  errorResponse,
+} from '../common/response/response.helper';
 
 @Controller('usuarios')
 export class UsuariosController {
@@ -13,8 +25,16 @@ export class UsuariosController {
   }
 
   @Get()
-  listar() {
-    return this.usuariosService.listar();
+  async listar() {
+    try {
+      return await this.usuariosService.listar();
+    } catch (error) {
+      return errorResponse(
+        'Error al obtener los registros',
+        500,
+        error.message,
+      );
+    }
   }
 
   @Get(':id')
@@ -32,4 +52,3 @@ export class UsuariosController {
     return this.usuariosService.eliminar(+id);
   }
 }
-

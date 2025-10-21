@@ -1,8 +1,29 @@
-export function successResponse(status: number, message: string, data?: any) {
-  return { status, message, data };
+export interface ApiResponse<T> {
+  status: boolean;
+  code: number;
+  message: string;
+  data?: T;
+  errors?: any;
 }
 
-export function errorResponse(status: number, message: string, error?: any) {
-  return { status, message, error };
-}
+export const successResponse = <T>(
+  data: T,
+  message = 'Operación exitosa',
+  code = 200,
+): ApiResponse<T> => ({
+  status: true,
+  code,
+  message,
+  data,
+});
 
+export const errorResponse = (
+  message = 'Ocurrió un error inesperado',
+  code = 400,
+  errors?: any,
+): ApiResponse<null> => ({
+  status: false,
+  code,
+  message,
+  errors,
+});

@@ -1,19 +1,24 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, JoinColumn } from 'typeorm';
-import { Tramite } from '../../tramites/entities/tramite.entity';
-import { Usuario } from '../../usuarios/entities/usuario.entity';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+} from 'typeorm';
+import { Tramite } from '../../tramites/entities/tramites.entity';
 
 @Entity('documentos')
 export class Documento {
-  @PrimaryGeneratedColumn({ name: 'id_documento' })
-  id_documento: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @ManyToOne(() => Tramite, (t) => t.historial, { nullable: true })
+  // 🔹 Relación con trámite (ya no con usuario)
+  @ManyToOne(() => Tramite, (tramite) => tramite.documentos, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'id_tramite' })
   tramite: Tramite;
-
-  @ManyToOne(() => Usuario, { nullable: true })
-  @JoinColumn({ name: 'id_usuario' })
-  usuario: Usuario;
 
   @Column({ length: 255 })
   nombre_archivo: string;
@@ -27,4 +32,3 @@ export class Documento {
   @CreateDateColumn({ name: 'fecha_subida' })
   fecha_subida: Date;
 }
-

@@ -1,7 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Tramite } from '../../tramites/entities/tramite.entity';
-import { Observacion } from '../../observaciones/entities/observacion.entity';
-import { Historial } from '../../tramites/entities/historial.entity';
+import { Tramite } from '../../tramites/entities/tramites.entity';
+import { Trazabilidad } from '../../trazabilidad/entities/trazabilidad.entity';
 
 @Entity('usuarios')
 export class Usuario {
@@ -17,19 +16,34 @@ export class Usuario {
   @Column({ length: 200 })
   password: string;
 
-  @Column({ length: 50, default: 'CIUDADANO' })
-  rol: string; // ADMIN | GESTOR | CIUDADANO
+  @Column({
+    type: 'enum',
+    enum: [
+      'ADMIN',
+      'GESTOR',
+      'USER',
+      'COORDINADOR',
+      'FUNCIONARIO',
+      'SUPERVISOR',
+      'ATENCION',
+    ],
+    default: 'USER',
+  })
+  rol: string;
 
+  // 🔹 Trámites solicitados por el usuario
   @OneToMany(() => Tramite, (tramite) => tramite.solicitante)
   tramitesSolicitados: Tramite[];
 
+  // 🔹 Trámites gestionados por el usuario (si es gestor)
   @OneToMany(() => Tramite, (tramite) => tramite.gestorAsignado)
   tramitesGestionados: Tramite[];
 
-  @OneToMany(() => Observacion, (obs) => obs.autor)
-  observaciones: Observacion[];
+  // 🔹 Trazabilidades creadas por este usuario (acciones realizadas)
+  @OneToMany(() => Trazabilidad, (trazabilidad) => trazabilidad.usuario)
+  trazabilidadesHechas: Trazabilidad[];
 
-  @OneToMany(() => Historial, (hist) => hist.usuario)
-  historial: Historial[];
+  // 🔹 Trazabilidades donde el usuario figura como gestor
+  @OneToMany(() => Trazabilidad, (trazabilidad) => trazabilidad.gestor)
+  trazabilidadesGestionadas: Trazabilidad[];
 }
-

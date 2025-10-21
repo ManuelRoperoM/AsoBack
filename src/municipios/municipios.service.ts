@@ -1,30 +1,40 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Municipio } from './entities/municipio.entity';
+import { Municipios } from './entities/municipios.entity';
+import { CreateMunicipiosDto } from './dto/create-municipios.dto';
+import { UpdateMunicipiosDto } from './dto/update-municipios.dto';
+import { successResponse } from '../common/response/response.helper';
 
 @Injectable()
 export class MunicipiosService {
-  constructor(@InjectRepository(Municipio) private municipioRepo: Repository<Municipio>) {}
+  constructor(
+    @InjectRepository(Municipios)
+    private repo: Repository<Municipios>,
+  ) {}
 
-  async crear(dto: any) {
-    const m = this.municipioRepo.create(dto);
-    return this.municipioRepo.save(m);
+  create(dto: CreateMunicipiosDto) {
+    return this.repo.save(dto);
   }
 
-  async listar() {
-    return this.municipioRepo.find();
+  async findAll() {
+    const data = await this.repo.find();
+
+    if (!data || data.length === 0) {
+      return successResponse([], 'No hay registros disponibles', 204);
+    }
+    return successResponse(data, 'Consulta exitosa', 200);
   }
 
-  async obtener(id: number) {
-    const m = await this.municipioRepo.findOne({ where: { id_municipio: id } });
-    if (!m) throw new NotFoundException('Municipio no encontrado');
-    return m;
+  findOne(id: number) {
+    return this.repo.findOne({ where: { id } });
   }
 
-  async eliminar(id: number) {
-    const m = await this.obtener(id);
-    return this.municipioRepo.remove(m);
+  update(id: number, dto: UpdateMunicipiosDto) {
+    return this.repo.update(id, dto);
+  }
+
+  remove(id: number) {
+    return this.repo.delete(id);
   }
 }
-
