@@ -6,6 +6,8 @@ import { CiudadesModule } from './ciudades/ciudades.module';
 import { MunicipiosModule } from './municipios/municipios.module';
 import { TramitesModule } from './tramites/tramites.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
+import { AuthModule } from './auth/auth.module';
+import { AppController } from './app.controller';
 import { TramitesRelacionModule } from './tramites_relacion/tramites_relacion.module';
 import { SolicitantesTiposModule } from './solicitantes_tipos/solicitantes_tipos.module';
 
@@ -45,8 +47,13 @@ import { SolicitantesTiposModule } from './solicitantes_tipos/solicitantes_tipos
     TramitesModule,
     CiudadesModule,
     MunicipiosModule,
+    // DocumentosModule,
+    // TramiteEstadosModule,
+    // ObservacionesModule,
+    AuthModule,
     TramitesRelacionModule,
     SolicitantesTiposModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

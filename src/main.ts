@@ -12,6 +12,7 @@ async function bootstrap() {
   });
 
   // ✅ Validaciones globales para todos los DTOs
+  // ✅ Activa validaciones globales en todos los DTOs
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // elimina campos no definidos en el DTO
