@@ -1,46 +1,85 @@
-// tramites.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
   OneToMany,
-  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { Municipio } from 'src/municipios/entities/municipios.entity';
-import { Estado } from 'src/estados/entities/estados.entity';
-import { TramiteEstado } from 'src/tramite-estados/entities/tramite-estados.entity';
-import { Observacion } from 'src/observaciones/entities/observaciones.entity';
-import { Documento } from 'src/documentos/entities/documentos.entity';
+import { Usuario } from '../../usuarios/entities/usuario.entity';
+import { Inmueble } from '../../inmuebles/entities/inmuebles.entity';
+import { TramitesRelacion } from '../../tramites_relacion/entities/tramites_relacion.entity';
+import { Trazabilidad } from '../../trazabilidad/entities/trazabilidad.entity';
+import { Documento } from '../../documentos/entities/documento.entity';
+import { Titular } from '../../titulares/entities/titulares.entity';
+import { SolicitantesTipos } from '../../solicitantes_tipos/entities/solicitantes_tipos.entity';
 
 @Entity('tramites')
 export class Tramite {
   @PrimaryGeneratedColumn()
-  id_tramite: number;
+  id: number;
 
-  @Column({ default: 'Catastral' })
-  tipo_tramite: string;
+  @Column({ length: 50, default: 'EN PROCESO' })
+  estado: string;
 
-  @Column({ length: 100 })
-  usuario_solicitante: string;
+  // 🔹 Relación con la combinación de tipo de trámite y tipo de solicitud
+  @ManyToOne(() => TramitesRelacion, { eager: true, nullable: false })
+  tramiteRelacion: TramitesRelacion;
 
-  @ManyToOne(() => Municipio, (municipio) => municipio.tramites)
-  @JoinColumn({ name: 'id_municipio' })
-  municipio: Municipio;
+  // 🔹 Solicitante (usuario que crea el trámite)
+  @ManyToOne(() => Usuario, (usuario: Usuario) => usuario.tramitesSolicitados, {
+    eager: true,
+  })
+  solicitante: Usuario;
 
-  @ManyToOne(() => Estado, (estado) => estado.tramites)
-  @JoinColumn({ name: 'id_estado_actual' })
-  estadoActual: Estado;
+  // 🔹 Gestor asignado (usuario que gestiona el trámite)
+  @ManyToOne(() => Usuario, (usuario: Usuario) => usuario.tramitesGestionados, {
+    nullable: true,
+    eager: true,
+  })
+  gestorAsignado: Usuario;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  fecha_radicacion: Date;
+  // 🔹 Relación con inmuebles asociados al trámite
+  @OneToMany(() => Inmueble, (inmueble: Inmueble) => inmueble.tramite, {
+    cascade: true,
+  })
+  inmuebles: Inmueble[];
 
-  @OneToMany(() => TramiteEstado, (tramiteEstado) => tramiteEstado.tramite)
-  tramiteEstados: TramiteEstado[];
+  @OneToMany(() => Trazabilidad, (trazabilidad) => trazabilidad.tramite, {
+    cascade: true,
+  })
+  trazabilidades: Trazabilidad[];
+  // 🔹 Texto explicativo de las razones del trámite
+  @Column({ type: 'text', nullable: true })
+  razones?: string;
 
-  @OneToMany(() => Observacion, (observacion) => observacion.tramite)
-  observaciones: Observacion[];
+  // 🔹 Auditoría
+  @CreateDateColumn({ name: 'fecha_creacion' })
+  fechaCreacion: Date;
 
-  @OneToMany(() => Documento, (documento) => documento.tramite)
+  @UpdateDateColumn({ name: 'fecha_actualizacion' })
+  fechaActualizacion: Date;
+  // 🔹 Relación con titulares
+  @OneToMany(() => Titular, (titular) => titular.tramite, {
+    cascade: true,
+  })
+  titulares: Titular[];
+
+  // 🔹 Relación con documentos
+  @OneToMany(() => Documento, (documento) => documento.tramite, {
+    cascade: true,
+  })
   documentos: Documento[];
+
+  // 👇 Relación con SolicitantesTipos
+  @ManyToOne(
+    () => SolicitantesTipos,
+    (solicitanesTipo: SolicitantesTipos) => solicitanesTipo.tipoSolicitud,
+    {
+      nullable: true,
+      eager: true,
+    },
+  )
+  solicitanteTipo: SolicitantesTipos;
 }

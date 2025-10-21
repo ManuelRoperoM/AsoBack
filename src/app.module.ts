@@ -1,63 +1,61 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { RolesModule } from './roles/roles.module';
-import { ObservacionesModule } from './observaciones/observaciones.module';
-import { TramiteEstadosModule } from './tramite-estados/tramite-estados.module';
-import { EstadosModule } from './estados/estados.module';
-import { UsuariosModule } from './usuarios/usuarios.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { CiudadesModule } from './ciudades/ciudades.module';
 import { MunicipiosModule } from './municipios/municipios.module';
 import { TramitesModule } from './tramites/tramites.module';
-import { DocumentosModule } from './documentos/documentos.module';
-import { Documento } from './documentos/entities/documentos.entity';
-import { Estado } from './estados/entities/estados.entity';
-import { Municipio } from './municipios/entities/municipios.entity';
-import { Observacion } from './observaciones/entities/observaciones.entity';
-import { Rol } from './roles/entities/roles.entity';
-import { TramiteEstado } from './tramite-estados/entities/tramite-estados.entity';
-import { Tramite } from './tramites/entities/tramites.entity';
-import { Usuario } from './usuarios/entities/usuarios.entity';
+import { UsuariosModule } from './usuarios/usuarios.module';
+import { AuthModule } from './auth/auth.module';
+import { AppController } from './app.controller';
+import { TramitesRelacionModule } from './tramites_relacion/tramites_relacion.module';
+import { SolicitantesTiposModule } from './solicitantes_tipos/solicitantes_tipos.module';
 
 @Module({
   imports: [
+    // 🔹 Configuración global del entorno (.env)
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
+    // 🔹 Conexión a MySQL usando variables del entorno
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        type: config.get<'mysql'>('DB_TYPE'),
-        host: config.get<string>('DB_HOST'),
-        port: config.get<number>('DB_PORT'),
-        username: config.get<string>('DB_USERNAME'),
-        password: config.get<string>('DB_PASSWORD'),
-        database: config.get<string>('DB_NAME'),
-        entities: [
-          Documento,
-          Estado,
-          Municipio,
-          Observacion,
-          Rol,
-          TramiteEstado,
-          Tramite,
-          Usuario,
-        ],
+        type: 'mysql',
+        host: config.get<string>('DB_HOST', 'localhost'),
+        port: config.get<number>('DB_PORT', 3306),
+        username: config.get<string>('DB_USER', 'root'),
+        password: config.get<string>('DB_PASS', ''),
+        database: config.get<string>('DB_NAME', 'asomunicipios_db'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: true,
+        timezone: 'America/Bogota', // ⬅️ Importante
+        // 👇 CLAVE: codificación correcta
+        charset: 'utf8mb4_general_ci',
+
+        // Opcional: para asegurar compatibilidad con emojis o ñ
+        extra: {
+          charset: 'utf8mb4_unicode_ci',
+        },
+        logging: true, // 🔍 importante
+        logger: 'advanced-console',
       }),
     }),
-    RolesModule,
+
+    // 🔹 Módulos activos
     UsuariosModule,
-    MunicipiosModule,
-    EstadosModule,
     TramitesModule,
-    TramiteEstadosModule,
-    ObservacionesModule,
-    DocumentosModule,
+    CiudadesModule,
+    MunicipiosModule,
+    // DocumentosModule,
+    // TramiteEstadosModule,
+    // ObservacionesModule,
+    AuthModule,
+    TramitesRelacionModule,
+    SolicitantesTiposModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

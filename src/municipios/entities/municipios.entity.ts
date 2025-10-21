@@ -1,15 +1,10 @@
-// municipios.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Tramite } from 'src/tramites/entities/tramites.entity';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('municipios')
-export class Municipio {
+export class Municipios {
   @PrimaryGeneratedColumn()
-  id_municipio: number;
+  id: number;
 
-  @Column({ length: 100, unique: true })
-  nombre_municipio: string;
-
-  @OneToMany(() => Tramite, (tramite) => tramite.municipio)
-  tramites: Tramite[];
+  @Column({ length: 100, nullable: true })
+  nombre: string;
 }
