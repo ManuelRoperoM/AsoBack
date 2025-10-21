@@ -3,24 +3,22 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { CiudadesModule } from './ciudades/ciudades.module';
-import { DocumentosModule } from './documentos/documentos.module';
 import { MunicipiosModule } from './municipios/municipios.module';
-import { ObservacionesModule } from './observaciones/observaciones.module';
-import { RolesModule } from './roles/roles.module';
-import { TramiteEstadosModule } from './tramite-estados/tramite-estados.module';
 import { TramitesModule } from './tramites/tramites.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { AuthModule } from './auth/auth.module';
 import { AppController } from './app.controller';
+import { TramitesRelacionModule } from './tramites_relacion/tramites_relacion.module';
+import { SolicitantesTiposModule } from './solicitantes_tipos/solicitantes_tipos.module';
 
 @Module({
   imports: [
-    // 🔹 ConfigModule global, disponible en toda la app
+    // 🔹 Configuración global del entorno (.env)
     ConfigModule.forRoot({
       isGlobal: true,
     }),
 
-    // 🔹 Conexión a la BD usando variables de entorno vía ConfigService
+    // 🔹 Conexión a MySQL usando variables del entorno
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -32,19 +30,31 @@ import { AppController } from './app.controller';
         password: config.get<string>('DB_PASS', ''),
         database: config.get<string>('DB_NAME', 'asomunicipios_db'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: false,
+        synchronize: true,
+        timezone: 'America/Bogota', // ⬅️ Importante
+        // 👇 CLAVE: codificación correcta
+        charset: 'utf8mb4_general_ci',
+
+        // Opcional: para asegurar compatibilidad con emojis o ñ
+        extra: {
+          charset: 'utf8mb4_unicode_ci',
+        },
+        logging: true, // 🔍 importante
+        logger: 'advanced-console',
       }),
     }),
 
+    // 🔹 Módulos activos
     UsuariosModule,
     TramitesModule,
-    RolesModule,
     CiudadesModule,
     MunicipiosModule,
-    DocumentosModule,
-    TramiteEstadosModule,
-    ObservacionesModule,
+    // DocumentosModule,
+    // TramiteEstadosModule,
+    // ObservacionesModule,
     AuthModule,
+    TramitesRelacionModule,
+    SolicitantesTiposModule,
   ],
   controllers: [AppController],
 })

@@ -12,6 +12,7 @@ import { Repository } from 'typeorm';
 import { Usuario } from './entities/usuario.entity';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { successResponse } from '../common/response/response.helper';
 import * as bcrypt from 'bcrypt';
 import * as nodemailer from 'nodemailer';
 import { randomBytes } from 'crypto';
@@ -119,7 +120,12 @@ export class UsuariosService {
   }
 
   async listar() {
-    return this.usuarioRepo.find();
+    const data = await this.usuarioRepo.find();
+
+    if (!data || data.length === 0) {
+      return successResponse([], 'No hay registros disponibles', 204);
+    }
+    return successResponse(data, 'Consulta exitosa', 200);
   }
 
   async obtenerPorId(id: number) {

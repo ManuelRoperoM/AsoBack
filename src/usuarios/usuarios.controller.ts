@@ -12,9 +12,13 @@ import {
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
+import {
+  successResponse,
+  errorResponse,
+} from '../common/response/response.helper';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CreateUsuarioFromAdminDto } from './dto/create-usuario-from-admin.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('usuarios')
 export class UsuariosController {
@@ -34,14 +38,30 @@ export class UsuariosController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  listar() {
-    return this.usuariosService.listar();
+  async listar() {
+    try {
+      return await this.usuariosService.listar();
+    } catch (error) {
+      return errorResponse(
+        'Error al obtener los registros',
+        500,
+        error.message,
+      );
+    }
   }
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   obtenerPorId(@Param('id') id: number) {
     return this.usuariosService.obtenerPorId(+id);
+  }
+
+
+  @UseGuards(JwtAuthGuard)
+  @Post('edit-password')
+  changePassword(@Req() req, @Body() dto: ChangePasswordDto) {
+    const id_user = req.user.id_usuario;
+    return this.usuariosService.cambiarUserPassword(id_user, dto.newPass);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -54,13 +74,6 @@ export class UsuariosController {
   @Delete(':id')
   eliminar(@Param('id') id: number) {
     return this.usuariosService.eliminar(+id);
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Post('edit-password')
-  changePassword(@Req() req, @Body() dto: ChangePasswordDto) {
-    const id_user = req.user.id_usuario;
-    return this.usuariosService.cambiarUserPassword(id_user, dto.newPass);
   }
 
   @Post('reset-password')

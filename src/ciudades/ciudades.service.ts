@@ -1,31 +1,40 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Ciudad } from './entities/ciudad.entity';
-import { Municipio } from '../municipios/entities/municipio.entity';
+import { Ciudades } from './entities/ciudades.entity';
+import { CreateCiudadesDto } from './dto/create-ciudades.dto';
+import { UpdateCiudadesDto } from './dto/update-ciudades.dto';
+import { successResponse } from '../common/response/response.helper';
 
 @Injectable()
 export class CiudadesService {
-  constructor(@InjectRepository(Ciudad) private ciudadRepo: Repository<Ciudad>) {}
+  constructor(
+    @InjectRepository(Ciudades)
+    private repo: Repository<Ciudades>,
+  ) { }
 
-  async crear(dto: any) {
-    const ciudad = this.ciudadRepo.create(dto);
-    return this.ciudadRepo.save(ciudad);
+  create(dto: CreateCiudadesDto) {
+    return this.repo.save(dto);
   }
 
-  async listar() {
-    return this.ciudadRepo.find({ relations: ['municipio'] });
+  async findAll() {
+    const data = await this.repo.find();
+
+    if (!data || data.length === 0) {
+      return successResponse([], 'No hay registros disponibles', 204);
+    }
+    return successResponse(data, 'Consulta exitosa', 200);
   }
 
-  async obtener(id: number) {
-    const c = await this.ciudadRepo.findOne({ where: { id_ciudad: id }, relations: ['municipio'] });
-    if (!c) throw new NotFoundException('Ciudad no encontrada');
-    return c;
+  findOne(id: number) {
+    return this.repo.findOne({ where: { id } });
   }
 
-  async eliminar(id: number) {
-    const c = await this.obtener(id);
-    return this.ciudadRepo.remove(c);
+  update(id: number, dto: UpdateCiudadesDto) {
+    return this.repo.update(id, dto);
+  }
+
+  remove(id: number) {
+    return this.repo.delete(id);
   }
 }
-

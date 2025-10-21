@@ -2,13 +2,17 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Documento } from './entities/documento.entity';
-
+import { DocumentoDto } from 'src/tramites/dto/create-tramites.dto';
 @Injectable()
 export class DocumentosService {
-  constructor(@InjectRepository(Documento) private docRepo: Repository<Documento>) {}
+  constructor(
+    @InjectRepository(Documento) private docRepo: Repository<Documento>,
+  ) {}
 
-  async crear(dto: any) {
-    const doc = this.docRepo.create(dto);
+  async crear(dto: DocumentoDto) {
+    const doc = this.docRepo.create({
+      ...dto,
+    });
     return this.docRepo.save(doc);
   }
 
@@ -17,7 +21,10 @@ export class DocumentosService {
   }
 
   async obtener(id: number) {
-    const d = await this.docRepo.findOne({ where: { id_documento: id } , relations: ['tramite','usuario']});
+    const d = await this.docRepo.findOne({
+      where: { id },
+      relations: ['tramite', 'usuario'],
+    });
     if (!d) throw new NotFoundException('Documento no encontrado');
     return d;
   }
@@ -27,4 +34,3 @@ export class DocumentosService {
     return this.docRepo.remove(d);
   }
 }
-
