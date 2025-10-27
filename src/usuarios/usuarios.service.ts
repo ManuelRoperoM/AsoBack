@@ -8,7 +8,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not, In } from 'typeorm';
 import { Usuario } from './entities/usuario.entity';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
@@ -218,5 +218,26 @@ export class UsuariosService {
     } catch (error) {
       throw new NotFoundException(error.message);
     }
+  }
+
+  // listar usuarios para asignar gestor
+  async listarGestores() {
+    const data = await this.usuarioRepo.find({
+      select: ['id_usuario', 'nombre', 'correo', 'rol'], // 👈 Solo estos campos
+      where: {
+        rol: Not(In(['CIUDADANO', 'USER'])),
+      },
+      order: { nombre: 'ASC' },
+    });
+
+    if (!data || data.length === 0) {
+      return successResponse(
+        [],
+        'No hay usuarios con roles administrativos',
+        204,
+      );
+    }
+
+    return successResponse(data, 'Usuarios obtenidos correctamente', 200);
   }
 }
