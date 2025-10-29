@@ -131,6 +131,17 @@ export class TramitesService {
       }
 
       const newTramite = await this.tramiteRepo.save(tramite);
+
+      // 🟩 Generar el código
+      const fecha = new Date(newTramite.fechaCreacion);
+      const dia = fecha.getDate().toString().padStart(2, '0');
+      const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+      const año = fecha.getFullYear();
+      const codigo = `RASOGC-${newTramite.id}-${dia}-${mes}-${año}`;
+
+      // 🟩 Actualizar el campo codigoAso
+      await this.tramiteRepo.update(newTramite.id, { codigoAso: codigo });
+
       return await this.tramiteRepo.findOne({
         where: { id: newTramite.id },
         relations: [

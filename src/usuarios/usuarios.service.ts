@@ -35,7 +35,14 @@ export class UsuariosService {
     });
   }
 
-  async crear({ nombre, correo, password }: CreateUsuarioDto) {
+  async crear({
+    nombre,
+    correo,
+    password,
+    tipoDocumento,
+    numeroDocumento,
+    telefono,
+  }: CreateUsuarioDto) {
     try {
       const existUser = await this.usuarioRepo.findOne({ where: { correo } });
 
@@ -50,6 +57,9 @@ export class UsuariosService {
       const usuario = this.usuarioRepo.create({
         nombre,
         correo,
+        tipoDocumento,
+        numeroDocumento,
+        telefono,
         password: hashedPassword,
         rol: 'CIUDADANO',
       });
@@ -70,7 +80,8 @@ export class UsuariosService {
         throw new ForbiddenException('No tienes permisos para crear usuarios');
       }
 
-      const { nombre, correo, rol } = dto;
+      const { nombre, correo, rol, tipoDocumento, numeroDocumento, telefono } =
+        dto;
 
       const existUser = await this.usuarioRepo.findOne({ where: { correo } });
       if (existUser) {
@@ -85,6 +96,9 @@ export class UsuariosService {
       const usuario = this.usuarioRepo.create({
         nombre,
         correo,
+        tipoDocumento,
+        numeroDocumento,
+        telefono,
         password: hashedPassword,
         rol: rol || 'CIUDADANO',
       });
@@ -94,6 +108,9 @@ export class UsuariosService {
       const html = createUserTemplate
         .replace('{{nombre}}', savedUser.nombre)
         .replace('{{correo}}', savedUser.correo)
+        .replace('{{tipoDocumento}}', savedUser.tipoDocumento)
+        .replace('{{numeroDocumento}}', savedUser.numeroDocumento)
+        .replace('{{telefono}}', savedUser.telefono)
         .replace('{{nueva_contrasena}}', nuevaClave)
         .replace('{{año}}', new Date().getFullYear().toString())
         .replace('{{sitio}}', 'https://asomunicipios.com');
@@ -110,6 +127,9 @@ export class UsuariosService {
           id: savedUser.id_usuario,
           nombre: savedUser.nombre,
           correo: savedUser.correo,
+          tipoDocumento: savedUser.tipoDocumento,
+          numeroDocumento: savedUser.numeroDocumento,
+          telefono: savedUser.telefono,
           rol: savedUser.rol,
         },
       };

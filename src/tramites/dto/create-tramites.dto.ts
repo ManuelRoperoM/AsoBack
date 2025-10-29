@@ -104,7 +104,17 @@ export class TrazabilidadDto {
   @IsOptional()
   id_tramite?: number;
 
-  @IsEnum(['RADICADO', 'EN PROCESO', 'FINALIZADO', 'ANULADO', 'VERIFICAR'])
+  @IsEnum([
+    'ASIGNADO',
+    'RADICADO',
+    'EN PROCESO',
+    'FINALIZADO',
+    'ANULADO',
+    'VERIFICAR',
+    'SI RECHAZO',
+    'GENERADO',
+    'EN EJECUCION',
+  ])
   estado: string;
 
   @IsOptional()

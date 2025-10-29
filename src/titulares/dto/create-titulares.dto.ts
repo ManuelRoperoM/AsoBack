@@ -14,6 +14,6 @@ export class CreateTitularesDto {
   @IsString()
   numeroDocumento: string;
 
-  @IsEnum(['CC', 'TI', 'PA', 'NIT', 'RC'])
+  @IsEnum(['CC', 'CE', 'PA', 'NIT'])
   tipoDocumento: string;
 }
