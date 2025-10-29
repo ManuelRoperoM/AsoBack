@@ -19,7 +19,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('usuarios')
 export class UsuariosController {
-  constructor(private readonly usuariosService: UsuariosService) {}
+  constructor(private readonly usuariosService: UsuariosService) { }
 
   @Post('create-user')
   crear(@Body() dto: CreateUsuarioDto) {
@@ -44,6 +44,15 @@ export class UsuariosController {
         500,
         error.message,
       );
+    }
+  }
+
+  @Get('gestores')
+  async listarGestores() {
+    try {
+      return await this.usuariosService.listarGestores();
+    } catch (error) {
+      return errorResponse('Error al obtener los usuarios', 500, error.message);
     }
   }
 

@@ -152,7 +152,8 @@ export class TramitesService {
     }
   }
 
-  async findAll() {
+  /*
+  async findAll(any?: any, usuario?: any) {
     const data = await this.tramiteRepo.find({
       relations: [
         'tramiteRelacion',
@@ -167,6 +168,9 @@ export class TramitesService {
         'inmuebles',
         'inmuebles.municipio',
       ],
+      order: {
+        id: 'DESC', // 👈 Cambia "id_tramite" por el campo que identifica tu orden
+      },
     });
 
     if (!data || data.length === 0) {
@@ -176,8 +180,50 @@ export class TramitesService {
     return successResponse(data, 'Consulta exitosa', 200);
   }
 
+  */
+
+  async findAll(usuarioActual: any) {
+    try {
+      const where: any = {};
+
+      // 🔹 Si es ciudadano, solo ve sus propios trámites
+      if (usuarioActual.rol === 'CIUDADANO') {
+        where.solicitante = { id_usuario: usuarioActual.id_usuario };
+      }
+
+      // 🔹 Si es GESTOR o ADMIN, no se aplica filtro (ven todos)
+      const data = await this.tramiteRepo.find({
+        where,
+        relations: [
+          'tramiteRelacion',
+          'tramiteRelacion.tramiteTipo',
+          'tramiteRelacion.solicitudTipo',
+          'solicitante',
+          'gestorAsignado',
+          'solicitanteTipo',
+          'titulares',
+          'documentos',
+          'trazabilidades',
+          'inmuebles',
+          'inmuebles.municipio',
+        ],
+        order: {
+          id: 'DESC',
+        },
+      });
+
+      if (!data || data.length === 0) {
+        return successResponse([], 'No hay registros disponibles', 204);
+      }
+
+      return successResponse(data, 'Consulta exitosa', 200);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
   async findOne(id: number) {
-    const tramite = await this.tramiteRepo.findOne({
+    const data = await this.tramiteRepo.findOne({
       where: { id },
       relations: [
         'tramiteRelacion',
@@ -194,11 +240,11 @@ export class TramitesService {
       ],
     });
 
-    if (!tramite) {
-      throw new NotFoundException(`Trámite con ID ${id} no encontrado`);
+    if (!data) {
+      return successResponse([], `Trámite con ID ${id} no encontrado`, 204);
     }
 
-    return tramite;
+    return successResponse(data, 'Consulta exitosa', 200);
   }
 
   async update(id: number, dto: UpdateTramiteDto) {
