@@ -43,7 +43,17 @@ export class Trazabilidad {
 
   @Column({
     type: 'enum',
-    enum: ['RADICADO', 'EN PROCESO', 'FINALIZADO', 'ANULADO', 'VERIFICAR'],
+    enum: [
+      'ASIGNADO',
+      'RADICADO',
+      'EN PROCESO',
+      'FINALIZADO',
+      'ANULADO',
+      'VERIFICAR',
+      'SI RECHAZO',
+      'GENERADO',
+      'EN EJECUCION',
+    ],
     default: 'RADICADO',
   })
   estado: string;

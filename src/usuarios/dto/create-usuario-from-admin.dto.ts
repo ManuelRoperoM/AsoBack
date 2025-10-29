@@ -12,6 +12,15 @@ export class CreateUsuarioFromAdminDto {
   @IsString()
   nombre: string;
 
+  @IsString()
+  numeroDocumento: string;
+
+  @IsEnum(['CC', 'CE', 'PA', 'NIT'])
+  tipoDocumento: string;
+
+  @IsString()
+  telefono: string;
+
   @IsEmail()
   correo: string;
 

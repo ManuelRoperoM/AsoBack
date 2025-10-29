@@ -7,8 +7,21 @@ export class Usuario {
   @PrimaryGeneratedColumn({ name: 'id_usuario' })
   id_usuario: number;
 
+  @Column({
+    type: 'enum',
+    enum: ['CC', 'CE', 'PA', 'NIT'],
+    default: 'CC',
+  })
+  tipoDocumento: string;
+
+  @Column({ length: 20, nullable: false, unique: false })
+  numeroDocumento: string;
+
   @Column({ length: 150 })
   nombre: string;
+
+  @Column({ length: 15 })
+  telefono: string;
 
   @Column({ length: 150, unique: true })
   correo: string;
