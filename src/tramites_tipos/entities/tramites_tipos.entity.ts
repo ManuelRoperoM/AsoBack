@@ -9,6 +9,9 @@ export class TramitesTipos {
   @Column({ length: 100, nullable: true })
   nombre: string;
 
+  @Column({ length: 10, nullable: true })
+  caso: string;
+
   @OneToMany(() => TramitesRelacion, (relacion) => relacion.tramiteTipo)
   tramitesRelacion: TramitesRelacion[];
 }

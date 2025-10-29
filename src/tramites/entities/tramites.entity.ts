@@ -23,6 +23,9 @@ export class Tramite {
   @Column({ length: 50, default: 'EN PROCESO' })
   estado: string;
 
+  @Column({ name: 'codigo_aso', length: 50, nullable: true })
+  codigoAso: string;
+
   // 🔹 Relación con la combinación de tipo de trámite y tipo de solicitud
   @ManyToOne(() => TramitesRelacion, { eager: true, nullable: false })
   tramiteRelacion: TramitesRelacion;

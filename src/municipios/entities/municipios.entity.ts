@@ -7,4 +7,7 @@ export class Municipios {
 
   @Column({ length: 100, nullable: true })
   nombre: string;
+
+  @Column({ length: 10, nullable: true })
+  caso: string;
 }

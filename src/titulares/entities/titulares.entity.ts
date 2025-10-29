@@ -26,7 +26,7 @@ export class Titular {
 
   @Column({
     type: 'enum',
-    enum: ['CC', 'TI', 'PA', 'NIT', 'RC'],
+    enum: ['CC', 'CE', 'PA', 'NIT'],
     default: 'CC',
   })
   tipoDocumento: string;

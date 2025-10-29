@@ -9,6 +9,9 @@ export class SolicitantesTipos {
   @Column({ length: 100, nullable: true })
   nombre: string;
 
+  @Column({ length: 10, nullable: true })
+  caso: string;
+
   // 👇 Relación inversa (un tipo de solicitante puede tener varios trámites)
   @OneToMany(() => Tramite, (tramite) => tramite.solicitanteTipo)
   tipoSolicitud: Tramite[];
