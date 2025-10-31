@@ -8,12 +8,21 @@ import {
   ParseIntPipe,
   UseGuards,
   Req,
+  UseInterceptors,
+  UploadedFiles,
+  BadRequestException,
 } from '@nestjs/common';
+
+import * as fs from 'fs';
+import * as path from 'path';
+
 import { TramitesService } from './tramites.service';
 import { CreateTramiteDto } from './dto/create-tramites.dto';
 
 import { errorResponse } from '../common/response/response.helper';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 
 @Controller('tramites')
 export class TramitesController {
@@ -107,4 +116,40 @@ export class TramitesController {
     return this.tramitesService.obtenerTrazabilidadPorTramite(id);
   }
   //.................
+
+  @Post(':codigo/archivos')
+  @UseInterceptors(
+    FilesInterceptor('archivos', 10, {
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          const codigo = req.params.codigo;
+          const dir = path.join(__dirname, '../../dataset', codigo);
+          if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+          cb(null, dir);
+        },
+        filename: (req, file, cb) => {
+          const timestamp = Date.now();
+          //cb(null, `${timestamp}_${file.originalname}`);
+          cb(null, `${file.originalname}`);
+        },
+      }),
+    }),
+  )
+  async subirArchivos(
+    @UploadedFiles() files: Express.Multer.File[],
+    @Param('codigo') codigo: string,
+  ) {
+    if (!files?.length)
+      throw new BadRequestException('No se recibieron archivos');
+    return {
+      success: true,
+      message: 'Archivos subidos correctamente',
+      codigo,
+      archivos: files.map((f) => ({
+        nombre: f.originalname,
+        //ruta: f.path,
+        ruta: `/dataset/${codigo}/${f.originalname}`,
+      })),
+    };
+  }
 }

@@ -3,6 +3,8 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Tramite } from './entities/tramites.entity';
@@ -141,6 +143,15 @@ export class TramitesService {
 
       // 🟩 Actualizar el campo codigoAso
       await this.tramiteRepo.update(newTramite.id, { codigoAso: codigo });
+
+      //..............  NUEVO CODIGO CARPETA
+      // 🟩 Crear carpeta física en /dataset/<codigo>
+      const basePath = path.join(__dirname, '../../dataset', codigo);
+      if (!fs.existsSync(basePath)) {
+        fs.mkdirSync(basePath, { recursive: true });
+      }
+
+      // .............. FIN CODUGO NUEVO CARPETAS
 
       return await this.tramiteRepo.findOne({
         where: { id: newTramite.id },
