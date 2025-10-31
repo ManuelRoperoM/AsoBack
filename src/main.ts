@@ -2,31 +2,37 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import * as express from 'express';
+import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // ✅ Prefijo global para todos los endpoints
-  app.setGlobalPrefix('api', {
-    exclude: ['/'], // puedes excluir rutas públicas si lo deseas
+  // ✅ 1. Habilitar CORS antes de todo
+  app.enableCors({
+    origin: ['http://localhost:5173'], // frontend Vite
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
   });
 
-  // ✅ Validaciones globales para todos los DTOs
-  // ✅ Activa validaciones globales en todos los DTOs
+  // ✅ 2. Servir carpeta "dataset" (ya con CORS activo)
+  const datasetPath = join(process.cwd(), 'dataset');
+  app.use('/dataset', express.static(datasetPath));
+
+  // ✅ 3. Prefijo global
+  app.setGlobalPrefix('api', { exclude: ['/'] });
+
+  // ✅ 4. Validaciones globales
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // elimina campos no definidos en el DTO
-      forbidNonWhitelisted: true, // lanza error si llegan campos no permitidos
-      transform: true, // convierte los payloads a instancias de las clases DTO
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
     }),
   );
 
-  // ✅ Permite CORS (opcional pero recomendado)
-  app.enableCors({
-    origin: '*', // puedes restringirlo a dominios específicos si lo prefieres
-  });
-
-  // ✅ Obtiene el puerto desde variables de entorno
+  // ✅ 5. Puerto
   const configService = app.get(ConfigService);
   const port = configService.get<number>('APP_PORT') || 3000;
 

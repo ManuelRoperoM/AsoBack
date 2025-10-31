@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { AppController } from './app.controller';
 import { TramitesRelacionModule } from './tramites_relacion/tramites_relacion.module';
 import { SolicitantesTiposModule } from './solicitantes_tipos/solicitantes_tipos.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { SolicitantesTiposModule } from './solicitantes_tipos/solicitantes_tipos
     AuthModule,
     TramitesRelacionModule,
     SolicitantesTiposModule,
+    UploadsModule,
   ],
   controllers: [AppController],
 })

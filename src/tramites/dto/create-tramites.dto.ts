@@ -6,6 +6,8 @@ import {
   ValidateNested,
   IsEnum,
   IsInt,
+  MaxLength,
+  IsBase64,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateInmuebleDto } from '../../inmuebles/dto/create-inmuebles.dto';
@@ -96,7 +98,12 @@ export class DocumentoDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(50)
   tipo?: string;
+
+  @IsOptional()
+  @IsBase64()
+  contenido?: string;
 }
 
 export class TrazabilidadDto {

@@ -11,15 +11,15 @@ import {
 } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
-import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { errorResponse } from '../common/response/response.helper';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CreateUsuarioFromAdminDto } from './dto/create-usuario-from-admin.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateUsuarioRolDto } from './dto/update-usuario-rol.dto';
 
 @Controller('usuarios')
 export class UsuariosController {
-  constructor(private readonly usuariosService: UsuariosService) { }
+  constructor(private readonly usuariosService: UsuariosService) {}
 
   @Post('create-user')
   crear(@Body() dto: CreateUsuarioDto) {
@@ -71,7 +71,7 @@ export class UsuariosController {
 
   @UseGuards(JwtAuthGuard)
   @Put(':id')
-  actualizar(@Param('id') id: number, @Body() dto: UpdateUsuarioDto) {
+  actualizar(@Param('id') id: number, @Body() dto: UpdateUsuarioRolDto) {
     return this.usuariosService.actualizar(+id, dto);
   }
 

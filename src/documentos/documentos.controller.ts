@@ -20,6 +20,11 @@ export class DocumentosController {
     return this.documentosService.obtener(+id);
   }
 
+  @Post(':id')
+  insertar(@Body() dto: any, @Param('id') id: number) {
+    return this.documentosService.insertar(dto, id);
+  }
+
   @Delete(':id')
   eliminar(@Param('id') id: number) {
     return this.documentosService.eliminar(+id);
