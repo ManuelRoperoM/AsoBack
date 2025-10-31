@@ -11,13 +11,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, In } from 'typeorm';
 import { Usuario } from './entities/usuario.entity';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
-import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { successResponse } from '../common/response/response.helper';
 import * as bcrypt from 'bcrypt';
 import * as nodemailer from 'nodemailer';
 import { randomBytes } from 'crypto';
 import { resetPasswordTemplate } from '../templates/email';
 import { createUserTemplate } from '../templates/createUser';
+import { UpdateUsuarioRolDto } from './dto/update-usuario-rol.dto';
 
 @Injectable()
 export class UsuariosService {
@@ -49,6 +49,15 @@ export class UsuariosService {
       if (existUser)
         throw new ConflictException(
           `Ya existe un usuario con el correo ${correo}`,
+        );
+
+      const existUserDoc = await this.usuarioRepo.findOne({
+        where: { numeroDocumento },
+      });
+
+      if (existUserDoc)
+        throw new ConflictException(
+          `Ya existe un usuario con el documento ${numeroDocumento}`,
         );
 
       const saltRounds = 10;
@@ -87,6 +96,15 @@ export class UsuariosService {
       if (existUser) {
         throw new ConflictException(
           `Ya existe un usuario con el correo ${correo}`,
+        );
+      }
+
+      const existUserDoc = await this.usuarioRepo.findOne({
+        where: { numeroDocumento },
+      });
+      if (existUserDoc) {
+        throw new ConflictException(
+          `Ya existe un usuario con el documento ${numeroDocumento}`,
         );
       }
 
@@ -140,7 +158,11 @@ export class UsuariosService {
   }
 
   async listar() {
-    const data = await this.usuarioRepo.find();
+    const data = await this.usuarioRepo.find({
+      order: {
+        id_usuario: 'DESC', // 👈 Orden descendente
+      },
+    });
 
     if (!data || data.length === 0) {
       return successResponse([], 'No hay registros disponibles', 204);
@@ -154,7 +176,7 @@ export class UsuariosService {
     return user;
   }
 
-  async actualizar(id: number, dto: UpdateUsuarioDto) {
+  async actualizar(id: number, dto: UpdateUsuarioRolDto) {
     const user = await this.obtenerPorId(id);
     Object.assign(user, dto);
     return this.usuarioRepo.save(user);

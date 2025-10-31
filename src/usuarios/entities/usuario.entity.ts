@@ -14,7 +14,7 @@ export class Usuario {
   })
   tipoDocumento: string;
 
-  @Column({ length: 20, nullable: false, unique: false })
+  @Column({ length: 20, nullable: false, unique: true })
   numeroDocumento: string;
 
   @Column({ length: 150 })
