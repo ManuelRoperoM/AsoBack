@@ -9,8 +9,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // ✅ 1. Habilitar CORS antes de todo
+
+  const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',').map((o) => o.trim())
+    : ['http://localhost:5173'];
+
   app.enableCors({
-    origin: ['http://localhost:5173'], // frontend Vite
+    origin: allowedOrigins, // frontend Vite
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
