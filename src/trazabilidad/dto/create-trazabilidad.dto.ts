@@ -7,15 +7,12 @@ export class CreateTrazabilidadDto {
 
   @IsOptional()
   @IsEnum([
-    'ASIGNADO',
     'RADICADO',
-    'EN PROCESO',
+    'ASIGNADO',
+    'RECHAZADO',
+    'REVISIÓN',
+    'DEVUELTO',
     'FINALIZADO',
-    'ANULADO',
-    'VERIFICAR',
-    'SI RECHAZO',
-    'GENERADO',
-    'EN EJECUCION',
   ])
   estado: string;
 

@@ -44,15 +44,12 @@ export class Trazabilidad {
   @Column({
     type: 'enum',
     enum: [
-      'ASIGNADO',
       'RADICADO',
-      'EN PROCESO',
+      'ASIGNADO',
+      'RECHAZADO',
+      'REVISIÓN',
+      'DEVUELTO',
       'FINALIZADO',
-      'ANULADO',
-      'VERIFICAR',
-      'SI RECHAZO',
-      'GENERADO',
-      'EN EJECUCION',
     ],
     default: 'RADICADO',
   })

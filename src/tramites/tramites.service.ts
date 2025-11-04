@@ -23,6 +23,7 @@ import { TrazabilidadService } from 'src/trazabilidad/trazabilidad.service';
 import { SolicitantesTipos } from 'src/solicitantes_tipos/entities/solicitantes_tipos.entity';
 import { Trazabilidad } from 'src/trazabilidad/entities/trazabilidad.entity';
 import { successResponse } from '../common/response/response.helper';
+import { Municipios } from 'src/municipios/entities/municipios.entity';
 @Injectable()
 export class TramitesService {
   // trazabilidadRepo: any;
@@ -52,9 +53,12 @@ export class TramitesService {
 
     @InjectRepository(Trazabilidad)
     private readonly trazabilidadRepo: Repository<Trazabilidad>,
+
+    @InjectRepository(Municipios)
+    private readonly municipioRepo: Repository<Municipios>, // 👈 AGREGA ESTA LÍNEA
   ) {}
 
-  async create(dto: CreateTramiteDto) {
+  /*  async create(dto: CreateTramiteDto) {
     try {
       const tramiteRelacion = await this.tramitesRelacionRepo.findOne({
         where: { id: dto.tramiteRelacionId },
@@ -172,7 +176,307 @@ export class TramitesService {
     } catch (error) {
       throw new BadRequestException(error.message);
     }
+  } */
+
+  //***************************** */
+
+  /*   async create(dto: CreateTramiteDto) {
+    try {
+      // 🟩 Buscar entidades base
+      const tramiteRelacion = await this.tramitesRelacionRepo.findOne({
+        where: { id: dto.tramiteRelacionId },
+      });
+      const solicitante = await this.usuarioRepo.findOne({
+        where: { id_usuario: dto.solicitanteId },
+      });
+
+      if (!tramiteRelacion)
+        throw new NotFoundException('Trámite relación no encontrado');
+      if (!solicitante)
+        throw new NotFoundException('Solicitante no encontrado');
+
+      // 🟩 Tipo de solicitante
+      const solicitanteTipo = await this.solicitanteTipo.findOne({
+        where: { id: dto.solicitanteTipoId },
+      });
+
+      if (!solicitanteTipo)
+        throw new NotFoundException('Tipo de solicitante no encontrado');
+
+      // 🟩 Definir gestorAsignado
+      let gestorAsignado = null;
+
+      // 1️⃣ Si viene explícito en el DTO
+      if (dto.gestorAsignadoId) {
+        gestorAsignado = await this.usuarioRepo.findOne({
+          where: { id_usuario: dto.gestorAsignadoId },
+        });
+      }
+
+      // 2️⃣ Si no viene, buscar gestor por municipio del primer inmueble
+      else if (dto.inmuebles?.length > 0) {
+        const primerInmueble = dto.inmuebles[0];
+
+        if (primerInmueble.municipio_id) {
+          const municipio = await this.municipioRepo.findOne({
+            where: { id: primerInmueble.municipio_id },
+            relations: ['gestorAsignado'], // 👈 asegúrate que la relación existe en la entidad Municipio
+          });
+
+          if (municipio?.gestorAsignado) {
+            gestorAsignado = municipio.gestorAsignado;
+            dto.gestorAsignadoId = municipio.gestorAsignado.id_usuario;
+          } else {
+            gestorAsignado = null; // no tiene gestor, queda sin asignar
+          }
+        }
+      }
+
+      // 🟩 Crear entidad Trámite
+      const tramite = this.tramiteRepo.create({
+        estado: dto.estado,
+        razones: dto.razones,
+        solicitanteTipo,
+        tramiteRelacion,
+        solicitante,
+        gestorAsignado, // ✅ asignado dinámicamente o null
+      });
+
+      // 🟩 Crear Inmuebles
+      if (dto.inmuebles && dto.inmuebles.length > 0) {
+        const nuevos = await Promise.all(
+          dto.inmuebles.map((data: CreateInmuebleDto) =>
+            this.inmuebleService.create(data),
+          ),
+        );
+        tramite.inmuebles = nuevos;
+      }
+
+      // 🟩 Crear Documentos
+      if (dto.documentos && dto.documentos.length > 0) {
+        const nuevos = await Promise.all(
+          dto.documentos.map((data: DocumentoDto) =>
+            this.documentoService.crear(data),
+          ),
+        );
+        tramite.documentos = nuevos;
+      }
+
+      // 🟩 Crear Titulares
+      if (dto.titulares && dto.titulares.length > 0) {
+        const nuevos = await Promise.all(
+          dto.titulares.map((data: CreateTitularesDto) =>
+            this.titularesService.create(data),
+          ),
+        );
+        tramite.titulares = nuevos;
+      } else {
+        throw new NotFoundException('No se encontró información de titular');
+      }
+
+      // 🟩 Crear Trazabilidades (si vienen)
+      if (dto.trazabilidades && dto.trazabilidades.length > 0) {
+        const nuevos = await Promise.all(
+          dto.trazabilidades.map((data: CreateTrazabilidadDto) =>
+            this.trazabilidadService.create(data, solicitante, gestorAsignado),
+          ),
+        );
+        tramite.trazabilidades = nuevos;
+      }
+
+      // 🟩 Guardar el trámite
+      const newTramite = await this.tramiteRepo.save(tramite);
+
+      // 🟩 Generar código único
+      const fecha = new Date(newTramite.fechaCreacion);
+      const dia = fecha.getDate().toString().padStart(2, '0');
+      const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+      const año = fecha.getFullYear();
+      const codigo = `RASOGC-${newTramite.id}-${dia}-${mes}-${año}`;
+
+      await this.tramiteRepo.update(newTramite.id, { codigoAso: codigo });
+
+      // 🟩 Crear carpeta física /dataset/<codigo>
+      const basePath = path.join(__dirname, '../../dataset', codigo);
+      if (!fs.existsSync(basePath)) {
+        fs.mkdirSync(basePath, { recursive: true });
+      }
+
+      // 🟩 Retornar trámite completo con relaciones
+      return await this.tramiteRepo.findOne({
+        where: { id: newTramite.id },
+        relations: [
+          'tramiteRelacion',
+          'tramiteRelacion.tramiteTipo',
+          'tramiteRelacion.solicitudTipo',
+          'solicitante',
+          'gestorAsignado',
+          'solicitanteTipo',
+          'titulares',
+          'documentos',
+          'trazabilidades',
+          'inmuebles',
+          'inmuebles.municipio',
+        ],
+      });
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  } */
+
+  //*********************************** */
+  //***************************** */
+
+  async create(dto: CreateTramiteDto) {
+    try {
+      // 🟩 Buscar entidades base
+      const tramiteRelacion = await this.tramitesRelacionRepo.findOne({
+        where: { id: dto.tramiteRelacionId },
+      });
+      const solicitante = await this.usuarioRepo.findOne({
+        where: { id_usuario: dto.solicitanteId },
+      });
+
+      if (!tramiteRelacion)
+        throw new NotFoundException('Trámite relación no encontrado');
+      if (!solicitante)
+        throw new NotFoundException('Solicitante no encontrado');
+
+      // 🟩 Tipo de solicitante
+      const solicitanteTipo = await this.solicitanteTipo.findOne({
+        where: { id: dto.solicitanteTipoId },
+      });
+
+      if (!solicitanteTipo)
+        throw new NotFoundException('Tipo de solicitante no encontrado');
+
+      // 🟩 Definir gestorAsignado
+      let gestorAsignado = null;
+
+      // 1️⃣ Si viene explícito en el DTO
+      if (dto.gestorAsignadoId) {
+        gestorAsignado = await this.usuarioRepo.findOne({
+          where: { id_usuario: dto.gestorAsignadoId },
+        });
+      }
+
+      // 2️⃣ Si no viene, buscar gestor por municipio del primer inmueble
+      else if (dto.inmuebles?.length > 0) {
+        const primerInmueble = dto.inmuebles[0];
+
+        if (primerInmueble.municipio_id) {
+          const municipio = await this.municipioRepo.findOne({
+            where: { id: primerInmueble.municipio_id },
+            relations: ['gestorAsignado'], // asegúrate que la relación exista
+          });
+
+          if (municipio?.gestorAsignado) {
+            gestorAsignado = municipio.gestorAsignado;
+            dto.gestorAsignadoId = municipio.gestorAsignado.id_usuario;
+          }
+        }
+      }
+
+      // 🟩 Determinar estado inicial según si hay gestor o no
+      let estadoInicial = 'RADICADO';
+      if (gestorAsignado) {
+        estadoInicial = 'ASIGNADO';
+      }
+
+      // 🟩 Crear entidad Trámite
+      const tramite = this.tramiteRepo.create({
+        estado: estadoInicial, // ✅ ahora dinámico
+        razones: dto.razones,
+        solicitanteTipo,
+        tramiteRelacion,
+        solicitante,
+        gestorAsignado, // puede ser null o el gestor del municipio
+      });
+
+      // 🟩 Crear Inmuebles
+      if (dto.inmuebles && dto.inmuebles.length > 0) {
+        const nuevos = await Promise.all(
+          dto.inmuebles.map((data: CreateInmuebleDto) =>
+            this.inmuebleService.create(data),
+          ),
+        );
+        tramite.inmuebles = nuevos;
+      }
+
+      // 🟩 Crear Documentos
+      if (dto.documentos && dto.documentos.length > 0) {
+        const nuevos = await Promise.all(
+          dto.documentos.map((data: DocumentoDto) =>
+            this.documentoService.crear(data),
+          ),
+        );
+        tramite.documentos = nuevos;
+      }
+
+      // 🟩 Crear Titulares
+      if (dto.titulares && dto.titulares.length > 0) {
+        const nuevos = await Promise.all(
+          dto.titulares.map((data: CreateTitularesDto) =>
+            this.titularesService.create(data),
+          ),
+        );
+        tramite.titulares = nuevos;
+      } else {
+        throw new NotFoundException('No se encontró información de titular');
+      }
+
+      // 🟩 Crear Trazabilidades (si vienen)
+      if (dto.trazabilidades && dto.trazabilidades.length > 0) {
+        const nuevos = await Promise.all(
+          dto.trazabilidades.map((data: CreateTrazabilidadDto) =>
+            this.trazabilidadService.create(data, solicitante, gestorAsignado),
+          ),
+        );
+        tramite.trazabilidades = nuevos;
+      }
+
+      // 🟩 Guardar el trámite
+      const newTramite = await this.tramiteRepo.save(tramite);
+
+      // 🟩 Generar código único
+      const fecha = new Date(newTramite.fechaCreacion);
+      const dia = fecha.getDate().toString().padStart(2, '0');
+      const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+      const año = fecha.getFullYear();
+      const codigo = `RASOGC-${newTramite.id}-${dia}-${mes}-${año}`;
+
+      await this.tramiteRepo.update(newTramite.id, { codigoAso: codigo });
+
+      // 🟩 Crear carpeta física /dataset/<codigo>
+      const basePath = path.join(__dirname, '../../dataset', codigo);
+      if (!fs.existsSync(basePath)) {
+        fs.mkdirSync(basePath, { recursive: true });
+      }
+
+      // 🟩 Retornar trámite completo con relaciones
+      return await this.tramiteRepo.findOne({
+        where: { id: newTramite.id },
+        relations: [
+          'tramiteRelacion',
+          'tramiteRelacion.tramiteTipo',
+          'tramiteRelacion.solicitudTipo',
+          'solicitante',
+          'gestorAsignado',
+          'solicitanteTipo',
+          'titulares',
+          'documentos',
+          'trazabilidades',
+          'inmuebles',
+          'inmuebles.municipio',
+        ],
+      });
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
   }
+
+  //*********************** */
+  //********************* */
 
   /*
   async findAll(any?: any, usuario?: any) {
@@ -204,7 +508,7 @@ export class TramitesService {
 
   */
 
-  async findAll(usuarioActual: any) {
+  /*  async findAll(usuarioActual: any) {
     try {
       const where: any = {};
 
@@ -214,6 +518,52 @@ export class TramitesService {
       }
 
       // 🔹 Si es GESTOR o ADMIN, no se aplica filtro (ven todos)
+      const data = await this.tramiteRepo.find({
+        where,
+        relations: [
+          'tramiteRelacion',
+          'tramiteRelacion.tramiteTipo',
+          'tramiteRelacion.solicitudTipo',
+          'solicitante',
+          'gestorAsignado',
+          'solicitanteTipo',
+          'titulares',
+          'documentos',
+          'trazabilidades',
+          'inmuebles',
+          'inmuebles.municipio',
+        ],
+        order: {
+          id: 'DESC',
+        },
+      });
+
+      if (!data || data.length === 0) {
+        return successResponse([], 'No hay registros disponibles', 204);
+      }
+
+      return successResponse(data, 'Consulta exitosa', 200);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  } */
+
+  async findAll(usuarioActual: any) {
+    try {
+      const where: any = {};
+
+      // 🔹 Si es ciudadano → solo sus trámites
+      if (usuarioActual.rol === 'CIUDADANO') {
+        where.solicitante = { id_usuario: usuarioActual.id_usuario };
+      }
+
+      // 🔹 Si es gestor → solo trámites asignados a él
+      else if (usuarioActual.rol === 'GESTOR') {
+        where.gestorAsignado = { id_usuario: usuarioActual.id_usuario };
+      }
+
+      // 🔹 Si es admin → ve todos, sin filtro (where vacío)
+
       const data = await this.tramiteRepo.find({
         where,
         relations: [
@@ -444,5 +794,173 @@ export class TramitesService {
     };
   }
 
-  //
+  // .................
+
+  async findByMunicipio(municipioId: number) {
+    try {
+      const tramites = await this.tramiteRepo
+        .createQueryBuilder('tramite')
+        .leftJoinAndSelect('tramite.tramiteRelacion', 'tramiteRelacion')
+        /*  .leftJoinAndSelect('tramite.tramiteRelacion.tramiteTipo', 'tramiteTipo')
+        .leftJoinAndSelect(
+          'tramite.tramiteRelacion.solicitudTipo',
+          'solicitudTipo',
+        ) */
+        .leftJoinAndSelect('tramite.solicitante', 'solicitante')
+        .leftJoinAndSelect('tramite.gestorAsignado', 'gestorAsignado')
+        .leftJoinAndSelect('tramite.solicitanteTipo', 'solicitanteTipo')
+        .leftJoinAndSelect('tramite.titulares', 'titulares')
+        .leftJoinAndSelect('tramite.documentos', 'documentos')
+        .leftJoinAndSelect('tramite.trazabilidades', 'trazabilidades')
+        .leftJoinAndSelect('tramite.inmuebles', 'inmuebles')
+        .leftJoinAndSelect('inmuebles.municipio', 'municipio')
+        .where('municipio.id = :municipioId', { municipioId })
+        .orderBy('tramite.id', 'DESC')
+        .getMany();
+
+      if (!tramites || tramites.length === 0) {
+        return successResponse(
+          [],
+          `No hay trámites asociados al municipio ${municipioId}`,
+          204,
+        );
+      }
+
+      return successResponse(tramites, 'Consulta exitosa', 200);
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    }
+  }
+
+  /* // ✅ Actualizar todos los trámites de un municipio
+  async asignarGestorPorMunicipio(
+    municipioId: number,
+    gestorAsignadoId: number,
+    usuarioLogueado: Usuario, // el usuario que realiza la acción (opcional)
+  ) {
+    // 1️⃣ Buscar los trámites asociados al municipio
+    const tramites = await this.tramiteRepo
+      .createQueryBuilder('tramite')
+      .leftJoinAndSelect('tramite.inmuebles', 'inmueble')
+      .leftJoinAndSelect('inmueble.municipio', 'municipio')
+      .where('municipio.id = :municipioId', { municipioId })
+      .getMany();
+
+    if (!tramites.length) {
+      throw new NotFoundException(
+        `No hay trámites asociados al municipio con ID ${municipioId}`,
+      );
+    }
+
+    // 2️⃣ Buscar el gestor
+    const gestor = await this.usuarioRepo.findOne({
+      where: { id_usuario: gestorAsignadoId },
+    });
+    if (!gestor) throw new NotFoundException('Gestor no encontrado');
+
+    // 3️⃣ Actualizar cada trámite y crear trazabilidad
+    for (const tramite of tramites) {
+      tramite.estado = 'ASIGNADO';
+      tramite.gestorAsignado = gestor;
+
+      await this.tramiteRepo.save(tramite);
+
+      // Crear trazabilidad
+      const trazabilidad = this.trazabilidadRepo.create({
+        tramite,
+        usuario: usuarioLogueado,
+        gestor,
+        estado: 'ASIGNADO',
+        observacion: `Trámite asignado al gestor ${gestor.nombre} por municipio.`,
+      });
+
+      await this.trazabilidadRepo.save(trazabilidad);
+    }
+
+    return successResponse(
+      { totalActualizados: tramites.length },
+      `Se actualizaron ${tramites.length} trámites del municipio ${municipioId}`,
+      200,
+    );
+  }
+ */
+  // ....................
+
+  async asignarGestorPorMunicipio(
+    municipioId: number,
+    gestorAsignadoId: number | null,
+    usuarioLogueado: Usuario,
+  ) {
+    // 1️⃣ Buscar los trámites asociados al municipio
+    const tramites = await this.tramiteRepo
+      .createQueryBuilder('tramite')
+      .leftJoinAndSelect('tramite.inmuebles', 'inmueble')
+      .leftJoinAndSelect('inmueble.municipio', 'municipio')
+      .where('municipio.id = :municipioId', { municipioId })
+      .getMany();
+
+    if (!tramites.length) {
+      throw new NotFoundException(
+        `No hay trámites asociados al municipio con ID ${municipioId}`,
+      );
+    }
+
+    let gestor: Usuario | null = null;
+
+    // 2️⃣ Si se envía un gestor válido, buscarlo
+    if (gestorAsignadoId !== null && gestorAsignadoId !== undefined) {
+      gestor = await this.usuarioRepo.findOne({
+        where: { id_usuario: gestorAsignadoId },
+      });
+      if (!gestor) throw new NotFoundException('Gestor no encontrado');
+    }
+
+    // 3️⃣ Actualizar cada trámite
+    for (const tramite of tramites) {
+      const estadoAnterior = tramite.estado;
+      let nuevoEstado = estadoAnterior;
+
+      if (gestor) {
+        // ✅ Si el trámite está RADICADO, cambia a ASIGNADO
+        if (tramite.estado === 'RADICADO') {
+          nuevoEstado = 'ASIGNADO';
+        }
+        // ✅ Asigna el gestor
+        tramite.gestorAsignado = gestor;
+      } else {
+        // ✅ Si el gestor es null, lo quita sin tocar el estado
+        tramite.gestorAsignado = null;
+      }
+
+      tramite.estado = nuevoEstado;
+      await this.tramiteRepo.save(tramite);
+
+      // 4️⃣ Registrar trazabilidad
+      const observacion = gestor
+        ? tramite.estado === 'RADICADO'
+          ? `Trámite actualizado. Se asignó el gestor ${gestor.nombre}. Estado: ${estadoAnterior} -> ${nuevoEstado}.`
+          : `Se asignó el gestor ${gestor.nombre} sin cambiar el estado (${estadoAnterior}).`
+        : `Se removió el gestor asignado. El estado permanece en ${estadoAnterior}.`;
+
+      const trazabilidad = this.trazabilidadRepo.create({
+        tramite,
+        usuario: usuarioLogueado,
+        gestor: gestor ?? null,
+        estado: nuevoEstado,
+        observacion,
+      });
+
+      await this.trazabilidadRepo.save(trazabilidad);
+    }
+
+    const mensaje = gestor
+      ? `Se asignó el gestor ${gestor.nombre} a ${tramites.length} trámites del municipio ${municipioId}`
+      : `Se removió el gestor de ${tramites.length} trámites del municipio ${municipioId}`;
+
+    return successResponse(
+      { totalActualizados: tramites.length },
+      mensaje,
+      200,
+    );
+  }
 }

@@ -1,7 +1,14 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsNumber } from 'class-validator';
 
-export class CreateMunicipiosDto {
-    @IsOptional()
-    @IsString()
-    nombre?: string;
+export class CreateMunicipioDto {
+  @IsString()
+  nombre: string;
+
+  @IsOptional()
+  @IsString()
+  caso?: string;
+
+  @IsOptional()
+  @IsNumber()
+  gestorAsignadoId?: number;
 }

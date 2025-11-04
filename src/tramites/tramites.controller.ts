@@ -11,6 +11,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   BadRequestException,
+  Patch,
 } from '@nestjs/common';
 
 import * as fs from 'fs';
@@ -152,4 +153,26 @@ export class TramitesController {
       })),
     };
   }
+
+  // ..................
+  @Get('municipio/:id')
+  async findByMunicipio(@Param('id') id: number) {
+    return this.tramitesService.findByMunicipio(id);
+  }
+
+  @Patch('asignar-por-municipio/:municipioId')
+  async asignarPorMunicipio(
+    @Param('municipioId') municipioId: number,
+    @Body('gestorAsignadoId') gestorAsignadoId: number,
+    @Req() req: any,
+  ) {
+    const usuarioLogueado = req.user; // depende de tu Auth
+    return this.tramitesService.asignarGestorPorMunicipio(
+      municipioId,
+      gestorAsignadoId,
+      usuarioLogueado,
+    );
+  }
+
+  // ..................
 }
