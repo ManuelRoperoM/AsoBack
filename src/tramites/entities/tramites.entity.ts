@@ -20,7 +20,7 @@ export class Tramite {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 50, default: 'EN PROCESO' })
+  @Column({ length: 50, default: 'RADICADO' })
   estado: string;
 
   @Column({ name: 'codigo_aso', length: 50, nullable: true })

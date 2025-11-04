@@ -1,6 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
 import { Tramite } from '../../tramites/entities/tramites.entity';
 import { Trazabilidad } from '../../trazabilidad/entities/trazabilidad.entity';
+import { Municipios } from '../../municipios/entities/municipios.entity';
 
 @Entity('usuarios')
 export class Usuario {
@@ -38,7 +45,7 @@ export class Usuario {
       'COORDINADOR',
       'FUNCIONARIO',
       'SUPERVISOR',
-      'ATENCION',
+      'ATENCION_AL_USUARIO',
       'CIUDADANO',
     ],
     default: 'USER',
@@ -60,4 +67,7 @@ export class Usuario {
   // 🔹 Trazabilidades donde el usuario figura como gestor
   @OneToMany(() => Trazabilidad, (trazabilidad) => trazabilidad.gestor)
   trazabilidadesGestionadas: Trazabilidad[];
+
+  @OneToMany(() => Municipios, (municipio) => municipio.gestorAsignado)
+  municipios: Municipios[];
 }

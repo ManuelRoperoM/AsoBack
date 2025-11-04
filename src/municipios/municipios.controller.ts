@@ -8,8 +8,8 @@ import {
   Delete,
 } from '@nestjs/common';
 import { MunicipiosService } from './municipios.service';
-import { CreateMunicipiosDto } from './dto/create-municipios.dto';
-import { UpdateMunicipiosDto } from './dto/update-municipios.dto';
+import { CreateMunicipioDto } from './dto/create-municipios.dto';
+import { UpdateMunicipioDto } from './dto/update-municipios.dto';
 import { errorResponse } from '../common/response/response.helper';
 
 @Controller('municipios')
@@ -17,7 +17,7 @@ export class MunicipiosController {
   constructor(private readonly service: MunicipiosService) {}
 
   @Post()
-  create(@Body() dto: CreateMunicipiosDto) {
+  create(@Body() dto: CreateMunicipioDto) {
     return this.service.create(dto);
   }
 
@@ -40,7 +40,7 @@ export class MunicipiosController {
   }
 
   @Put(':id')
-  update(@Param('id') id: number, @Body() dto: UpdateMunicipiosDto) {
+  update(@Param('id') id: number, @Body() dto: UpdateMunicipioDto) {
     return this.service.update(+id, dto);
   }
 

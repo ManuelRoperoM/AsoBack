@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Usuario } from 'src/usuarios/entities/usuario.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 
 @Entity('municipios')
 export class Municipios {
@@ -10,4 +11,10 @@ export class Municipios {
 
   @Column({ length: 10, nullable: true })
   caso: string;
+
+  @ManyToOne(() => Usuario, (usuario: Usuario) => usuario.municipios, {
+    nullable: true,
+    eager: true,
+  })
+  gestorAsignado: Usuario;
 }
