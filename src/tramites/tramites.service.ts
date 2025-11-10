@@ -550,16 +550,19 @@ export class TramitesService {
 
   async findAll(usuarioActual: any) {
     try {
-      const where: any = {};
+      let where: any = {};
 
       // 🔹 Si es ciudadano → solo sus trámites
       if (usuarioActual.rol === 'CIUDADANO') {
         where.solicitante = { id_usuario: usuarioActual.id_usuario };
       }
 
-      // 🔹 Si es gestor → solo trámites asignados a él
+      // 🔹 Si es gestor → trámites donde sea gestor asignado o auxiliar
       else if (usuarioActual.rol === 'GESTOR') {
-        where.gestorAsignado = { id_usuario: usuarioActual.id_usuario };
+        where = [
+          { gestorAsignado: { id_usuario: usuarioActual.id_usuario } },
+          { gestorAuxiliar: { id_usuario: usuarioActual.id_usuario } },
+        ];
       }
 
       // 🔹 Si es admin → ve todos, sin filtro (where vacío)
@@ -674,11 +677,12 @@ export class TramitesService {
 
   // actualizar tramite
   // 🔹 Actualizar estado del trámite y generar trazabilidad
-  async actualizarEstado(
+  /*  async actualizarEstado(
     id: number,
     dto: {
       estado: string;
       gestorAsignadoId?: number;
+      gestorAuxiliarId?: number;
       observacion?: string;
     },
     usuarioLogueado: any,
@@ -703,6 +707,16 @@ export class TramitesService {
         throw new BadRequestException('Gestor asignado no válido');
       }
       tramite.gestorAsignado = nuevoGestor;
+    }
+
+    if (dto.gestorAuxiliarId) {
+      const nuevoGestor = await this.usuarioRepo.findOne({
+        where: { id_usuario: dto.gestorAuxiliarId },
+      });
+      if (!nuevoGestor) {
+        throw new BadRequestException('Gestor asignado no válido');
+      }
+      tramite.gestorAuxiliar = nuevoGestor;
     }
 
     await this.tramiteRepo.save(tramite);
@@ -754,7 +768,138 @@ export class TramitesService {
           : null,
       },
     };
+  } */
+
+  async actualizarEstado(
+    id: number,
+    dto: {
+      estado: string;
+      gestorAsignadoId?: number;
+      gestorAuxiliarId?: number;
+      observacion?: string;
+    },
+    usuarioLogueado: any,
+  ) {
+    const tramite = await this.tramiteRepo.findOne({
+      where: { id },
+      relations: ['gestorAsignado', 'gestorAuxiliar'],
+    });
+
+    if (!tramite) {
+      throw new NotFoundException('Trámite no encontrado');
+    }
+
+    // ✅ Actualizar estado
+    tramite.estado = dto.estado || tramite.estado;
+
+    // ✅ Actualizar gestor asignado (si aplica)
+    if (dto.gestorAsignadoId) {
+      const nuevoGestor = await this.usuarioRepo.findOne({
+        where: { id_usuario: dto.gestorAsignadoId },
+      });
+      if (!nuevoGestor) {
+        throw new BadRequestException('Gestor asignado no válido');
+      }
+      tramite.gestorAsignado = nuevoGestor;
+    }
+
+    // ✅ Inicializar observación final (puede venir del DTO)
+    let observacionFinal = dto.observacion?.trim() || '';
+
+    // ✅ Manejar gestor auxiliar
+    if (dto.gestorAuxiliarId === 0) {
+      // Guardar nombre del auxiliar actual (si existía)
+      const nombreAuxiliarRemovido = tramite.gestorAuxiliar?.nombre;
+      tramite.gestorAuxiliar = null;
+
+      const texto = nombreAuxiliarRemovido
+        ? `Se removió el gestor auxiliar ${nombreAuxiliarRemovido}.`
+        : 'Se removió el gestor auxiliar del trámite.';
+
+      observacionFinal = observacionFinal
+        ? `${observacionFinal} | ${texto}`
+        : texto;
+    } else if (dto.gestorAuxiliarId) {
+      // Asignar nuevo gestor auxiliar
+      const nuevoGestorAux = await this.usuarioRepo.findOne({
+        where: { id_usuario: dto.gestorAuxiliarId },
+      });
+      if (!nuevoGestorAux) {
+        throw new BadRequestException('Gestor auxiliar no válido');
+      }
+
+      tramite.gestorAuxiliar = nuevoGestorAux;
+
+      const texto = `Se asignó el gestor auxiliar ${nuevoGestorAux.nombre}.`;
+      observacionFinal = observacionFinal
+        ? `${observacionFinal} | ${texto}`
+        : texto;
+    }
+
+    await this.tramiteRepo.save(tramite);
+
+    // ✅ Determinar el gestor que se registrará en la trazabilidad
+    const gestorTrazabilidad =
+      dto.gestorAuxiliarId === 0
+        ? null
+        : tramite.gestorAuxiliar || tramite.gestorAsignado;
+
+    // ✅ Crear trazabilidad
+    const trazabilidad = this.trazabilidadRepo.create({
+      tramite,
+      usuario: await this.usuarioRepo.findOne({
+        where: { id_usuario: usuarioLogueado.id },
+      }),
+      gestor: gestorTrazabilidad,
+      estado: dto.estado,
+      observacion: observacionFinal,
+    });
+
+    const trazabilidadGuardada = await this.trazabilidadRepo.save(trazabilidad);
+
+    // ✅ Respuesta final
+    return {
+      mensaje: 'Estado actualizado y trazabilidad registrada correctamente.',
+      tramite: {
+        id: tramite.id,
+        estado: tramite.estado,
+        gestorAsignado: tramite.gestorAsignado
+          ? {
+              id: tramite.gestorAsignado.id_usuario,
+              nombre: tramite.gestorAsignado.nombre,
+              correo: tramite.gestorAsignado.correo,
+            }
+          : null,
+        gestorAuxiliar: tramite.gestorAuxiliar
+          ? {
+              id: tramite.gestorAuxiliar.id_usuario,
+              nombre: tramite.gestorAuxiliar.nombre,
+              correo: tramite.gestorAuxiliar.correo,
+            }
+          : null,
+      },
+      trazabilidad: {
+        id: trazabilidadGuardada.id,
+        estado: trazabilidadGuardada.estado,
+        observacion: trazabilidadGuardada.observacion,
+        fecha: trazabilidadGuardada.fecha,
+        usuario: {
+          id: usuarioLogueado.id,
+          nombre: usuarioLogueado.nombre,
+          correo: usuarioLogueado.correo,
+          rol: usuarioLogueado.rol,
+        },
+        gestor: gestorTrazabilidad
+          ? {
+              id: gestorTrazabilidad.id_usuario,
+              nombre: gestorTrazabilidad.nombre,
+              correo: gestorTrazabilidad.correo,
+            }
+          : null,
+      },
+    };
   }
+
   // 🔹 Consultar trazabilidad de un trámite
   async obtenerTrazabilidadPorTramite(id: number) {
     const tramite = await this.tramiteRepo.findOne({ where: { id } });

@@ -30,6 +30,10 @@ export class CreateTramiteDto {
   @IsOptional()
   gestorAsignadoId?: number;
 
+  @IsNumber()
+  @IsOptional()
+  gestorAuxiliarId?: number;
+
   @IsOptional()
   @IsString()
   razones?: string;
