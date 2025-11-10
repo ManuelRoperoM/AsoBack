@@ -90,6 +90,7 @@ export class TramitesController {
     @Param('id', ParseIntPipe) id: number,
     @Body()
     body: {
+      gestorAuxiliarId: number;
       estado: string;
       gestorAsignadoId?: number;
       observacion?: string;
@@ -106,6 +107,7 @@ export class TramitesController {
       {
         estado: body.estado,
         gestorAsignadoId: body.gestorAsignadoId,
+        gestorAuxiliarId: body.gestorAuxiliarId,
         observacion: body.observacion,
       },
       body.usuarioLogueado, // 👈 Usuario simulado (por ahora)

@@ -43,6 +43,13 @@ export class Tramite {
   })
   gestorAsignado: Usuario;
 
+  // 🔹 Gestor auxiliar  (usuario que gestiona el trámite)
+  @ManyToOne(() => Usuario, (usuario: Usuario) => usuario.tramitesGestionados, {
+    nullable: true,
+    eager: true,
+  })
+  gestorAuxiliar: Usuario;
+
   // 🔹 Relación con inmuebles asociados al trámite
   @OneToMany(() => Inmueble, (inmueble: Inmueble) => inmueble.tramite, {
     cascade: true,
