@@ -4,16 +4,35 @@ import { Repository } from 'typeorm';
 import { Titular } from './entities/titulares.entity';
 import { CreateTitularesDto } from './dto/create-titulares.dto';
 import { UpdateTitularesDto } from './dto/update-titulares.dto';
+import { Tramite } from 'src/tramites/entities/tramites.entity';
 
 @Injectable()
 export class TitularesService {
   constructor(
     @InjectRepository(Titular)
     private readonly titularRepository: Repository<Titular>,
+    @InjectRepository(Tramite)
+    private readonly tramiteRepository: Repository<Tramite>,
   ) {}
 
   async create(dto: CreateTitularesDto): Promise<Titular> {
-    const titular = this.titularRepository.create({ ...dto });
+    const tramite = await this.tramiteRepository.findOne({
+      where: { id: dto.idTramite },
+    });
+
+    if (!tramite) {
+      throw new NotFoundException(
+        `No existe tramite con id : ${dto.idTramite}`,
+      );
+    }
+
+    const titular = this.titularRepository.create({
+      nombre: dto.nombre,
+      apellido: dto.apellido,
+      numeroDocumento: dto.numeroDocumento,
+      tipoDocumento: dto.tipoDocumento,
+      tramite: tramite,
+    });
     return this.titularRepository.save(titular);
   }
 
