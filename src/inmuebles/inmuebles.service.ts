@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Inmueble } from './entities/inmuebles.entity';
@@ -6,6 +10,7 @@ import { CreateInmuebleDto } from './dto/create-inmuebles.dto';
 import { UpdateInmuebleDto } from './dto/update-inmuebles.dto';
 import { Ciudades } from 'src/ciudades/entities/ciudades.entity';
 import { Municipios } from 'src/municipios/entities/municipios.entity';
+import { Tramite } from 'src/tramites/entities/tramites.entity';
 
 @Injectable()
 export class InmueblesService {
@@ -18,20 +23,48 @@ export class InmueblesService {
 
     @InjectRepository(Municipios)
     private readonly municipiosRepo: Repository<Municipios>,
+
+    @InjectRepository(Tramite)
+    private readonly tramiteRepo: Repository<Tramite>,
   ) {}
 
   async create(dto: CreateInmuebleDto) {
+    const existTramite = await this.tramiteRepo.findOne({
+      where: { id: dto.idTramite },
+    });
+
+    if (!existTramite) {
+      throw new NotFoundException(
+        `No se encontro el tramite con id ${dto.idTramite}`,
+      );
+    }
+
+    const tramiteInmuebleExist = await this.repo.findOne({
+      where: {
+        tramite: {
+          id: existTramite.id,
+        },
+      },
+    });
+
+    console.log('Tramite inmueble:', tramiteInmuebleExist);
+
+    if (tramiteInmuebleExist) {
+      throw new BadRequestException(`El tramite ya tiene un inmueble asingado`);
+    }
+
     const municipio = await this.municipiosRepo.findOne({
       where: { id: dto.municipio_id },
     });
 
-    console.log('Municipio: ', municipio);
-
     if (!municipio) throw new NotFoundException('Municipios no encontrados');
 
     const inmueble = this.repo.create({
-      ...dto,
-      municipio,
+      tipo: dto.tipo,
+      municipio: municipio,
+      ficha: dto.ficha,
+      matricula: dto.matricula,
+      tramite: existTramite,
     });
 
     return this.repo.save(inmueble);
