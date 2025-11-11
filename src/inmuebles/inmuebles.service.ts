@@ -64,8 +64,6 @@ export class InmueblesService {
       },
     });
 
-    console.log('Tramite inmueble:', tramiteInmuebleExist);
-
     if (tramiteInmuebleExist) {
       throw new BadRequestException(`El tramite ya tiene un inmueble asingado`);
     }
@@ -96,7 +94,21 @@ export class InmueblesService {
   }
 
   async update(id_inmueble: number, dto: UpdateInmuebleDto) {
-    await this.repo.update(id_inmueble, dto);
+    const exist = await this.repo.findOne({
+      where: { id: id_inmueble },
+    });
+
+    if (!exist) {
+      throw new NotFoundException(
+        `No se encontro inmueble con id ${id_inmueble} para actualizar`,
+      );
+    }
+    const { municipio_id, ...update_dto } = dto;
+    const municipio = await this.municipiosRepo.findOne({
+      where: { id: municipio_id },
+    });
+    if (!municipio) throw new NotFoundException('Municipios no encontrados');
+    await this.repo.update(id_inmueble, { ...update_dto, municipio });
     return this.findOne(id_inmueble);
   }
 
