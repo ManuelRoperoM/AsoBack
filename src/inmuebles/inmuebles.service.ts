@@ -29,13 +29,30 @@ export class InmueblesService {
   ) {}
 
   async create(dto: CreateInmuebleDto) {
+    const municipio = await this.municipiosRepo.findOne({
+      where: { id: dto.municipio_id },
+    });
+
+    console.log('Municipio: ', municipio);
+
+    if (!municipio) throw new NotFoundException('Municipios no encontrados');
+
+    const inmueble = this.repo.create({
+      ...dto,
+      municipio,
+    });
+
+    return this.repo.save(inmueble);
+  }
+
+  async createByTramite(idTramite: number, dto: CreateInmuebleDto) {
     const existTramite = await this.tramiteRepo.findOne({
-      where: { id: dto.idTramite },
+      where: { id: idTramite },
     });
 
     if (!existTramite) {
       throw new NotFoundException(
-        `No se encontro el tramite con id ${dto.idTramite}`,
+        `No se encontro el tramite con id ${idTramite}`,
       );
     }
 

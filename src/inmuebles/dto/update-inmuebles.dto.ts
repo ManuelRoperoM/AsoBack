@@ -1,7 +1,7 @@
 // src/inmuebles/dto/update-inmuebles.dto.ts
-import { PartialType } from '@nestjs/mapped-types';
+import { OmitType, PartialType } from '@nestjs/mapped-types';
 import { CreateInmuebleDto } from './create-inmuebles.dto';
 
-export class UpdateInmuebleDto extends PartialType(CreateInmuebleDto) {
-  id: number; // obligatorio para identificar el inmueble
-}
+export class UpdateInmuebleDto extends PartialType(
+  OmitType(CreateInmuebleDto, ['id'] as const),
+) {}

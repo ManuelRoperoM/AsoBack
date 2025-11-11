@@ -16,7 +16,4 @@ export class CreateTitularesDto {
 
   @IsEnum(['CC', 'CE', 'PA', 'NIT'])
   tipoDocumento: string;
-
-  @IsNumber()
-  idTramite: number;
 }

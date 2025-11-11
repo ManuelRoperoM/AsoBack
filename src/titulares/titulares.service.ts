@@ -11,19 +11,29 @@ export class TitularesService {
   constructor(
     @InjectRepository(Titular)
     private readonly titularRepository: Repository<Titular>,
+
     @InjectRepository(Tramite)
     private readonly tramiteRepository: Repository<Tramite>,
   ) {}
 
   async create(dto: CreateTitularesDto): Promise<Titular> {
+    const titular = this.titularRepository.create({ ...dto });
+    return this.titularRepository.save(titular);
+  }
+
+  async createByTramite(
+    idTramite: number,
+    dto: CreateTitularesDto,
+  ): Promise<Titular> {
     const tramite = await this.tramiteRepository.findOne({
-      where: { id: dto.idTramite },
+      where: { id: idTramite },
     });
+    console.log('idTramite: ', idTramite);
+
+    console.log('Tramite: ', tramite);
 
     if (!tramite) {
-      throw new NotFoundException(
-        `No existe tramite con id : ${dto.idTramite}`,
-      );
+      throw new NotFoundException(`No existe tramite con id : ${idTramite}`);
     }
 
     const titular = this.titularRepository.create({
