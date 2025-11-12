@@ -19,4 +19,7 @@ export class CreateInmuebleDto {
   @IsOptional()
   @IsInt()
   id?: number; // para actualizar inmuebles existentes
+
+  // @IsInt()
+  // idTramite: number;
 }

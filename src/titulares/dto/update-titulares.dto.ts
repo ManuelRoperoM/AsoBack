@@ -1,4 +1,6 @@
-import { PartialType } from '@nestjs/mapped-types';
+import { OmitType, PartialType } from '@nestjs/mapped-types';
 import { CreateTitularesDto } from './create-titulares.dto';
 
-export class UpdateTitularesDto extends PartialType(CreateTitularesDto) {}
+export class UpdateTitularesDto extends PartialType(
+  OmitType(CreateTitularesDto, ['id'] as const),
+) {}

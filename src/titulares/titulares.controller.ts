@@ -20,6 +20,14 @@ export class TitularesController {
     return this.service.create(dto);
   }
 
+  @Post(':idTramite')
+  createByTramite(
+    @Param('idTramite') idTramite: number,
+    @Body() dto: CreateTitularesDto,
+  ) {
+    return this.service.createByTramite(+idTramite, dto);
+  }
+
   @Get()
   findAll() {
     return this.service.findAll();

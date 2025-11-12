@@ -1,19 +1,52 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Titular } from './entities/titulares.entity';
 import { CreateTitularesDto } from './dto/create-titulares.dto';
 import { UpdateTitularesDto } from './dto/update-titulares.dto';
+import { Tramite } from 'src/tramites/entities/tramites.entity';
 
 @Injectable()
 export class TitularesService {
   constructor(
     @InjectRepository(Titular)
     private readonly titularRepository: Repository<Titular>,
+
+    @InjectRepository(Tramite)
+    private readonly tramiteRepository: Repository<Tramite>,
   ) {}
 
   async create(dto: CreateTitularesDto): Promise<Titular> {
     const titular = this.titularRepository.create({ ...dto });
+    return this.titularRepository.save(titular);
+  }
+
+  async createByTramite(
+    idTramite: number,
+    dto: CreateTitularesDto,
+  ): Promise<Titular> {
+    const tramite = await this.tramiteRepository.findOne({
+      where: { id: idTramite },
+    });
+    console.log('idTramite: ', idTramite);
+
+    console.log('Tramite: ', tramite);
+
+    if (!tramite) {
+      throw new NotFoundException(`No existe tramite con id : ${idTramite}`);
+    }
+
+    const titular = this.titularRepository.create({
+      nombre: dto.nombre,
+      apellido: dto.apellido,
+      numeroDocumento: dto.numeroDocumento,
+      tipoDocumento: dto.tipoDocumento,
+      tramite: tramite,
+    });
     return this.titularRepository.save(titular);
   }
 
@@ -37,6 +70,25 @@ export class TitularesService {
   }
 
   async remove(id: number): Promise<void> {
+    const titular = await this.titularRepository.findOne({
+      where: { id },
+      relations: ['tramite'],
+    });
+
+    if (!titular) {
+      throw new NotFoundException(`No se encontro el titular a eliminar`);
+    }
+
+    const titulares = await this.titularRepository.find({
+      where: { tramite: { id: titular.tramite.id } },
+      relations: ['tramite'],
+    });
+
+    if (titulares.length < 2) {
+      throw new BadRequestException(
+        `El tramite debe tener asociado al menos un Titular`,
+      );
+    }
     await this.titularRepository.delete(id);
   }
 }

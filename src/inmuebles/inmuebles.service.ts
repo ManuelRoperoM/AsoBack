@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Inmueble } from './entities/inmuebles.entity';
@@ -6,6 +10,7 @@ import { CreateInmuebleDto } from './dto/create-inmuebles.dto';
 import { UpdateInmuebleDto } from './dto/update-inmuebles.dto';
 import { Ciudades } from 'src/ciudades/entities/ciudades.entity';
 import { Municipios } from 'src/municipios/entities/municipios.entity';
+import { Tramite } from 'src/tramites/entities/tramites.entity';
 
 @Injectable()
 export class InmueblesService {
@@ -18,6 +23,9 @@ export class InmueblesService {
 
     @InjectRepository(Municipios)
     private readonly municipiosRepo: Repository<Municipios>,
+
+    @InjectRepository(Tramite)
+    private readonly tramiteRepo: Repository<Tramite>,
   ) {}
 
   async create(dto: CreateInmuebleDto) {
@@ -37,6 +45,46 @@ export class InmueblesService {
     return this.repo.save(inmueble);
   }
 
+  async createByTramite(idTramite: number, dto: CreateInmuebleDto) {
+    const existTramite = await this.tramiteRepo.findOne({
+      where: { id: idTramite },
+    });
+
+    if (!existTramite) {
+      throw new NotFoundException(
+        `No se encontro el tramite con id ${idTramite}`,
+      );
+    }
+
+    const tramiteInmuebleExist = await this.repo.findOne({
+      where: {
+        tramite: {
+          id: existTramite.id,
+        },
+      },
+    });
+
+    if (tramiteInmuebleExist) {
+      throw new BadRequestException(`El tramite ya tiene un inmueble asingado`);
+    }
+
+    const municipio = await this.municipiosRepo.findOne({
+      where: { id: dto.municipio_id },
+    });
+
+    if (!municipio) throw new NotFoundException('Municipios no encontrados');
+
+    const inmueble = this.repo.create({
+      tipo: dto.tipo,
+      municipio: municipio,
+      ficha: dto.ficha,
+      matricula: dto.matricula,
+      tramite: existTramite,
+    });
+
+    return this.repo.save(inmueble);
+  }
+
   findAll() {
     return this.repo.find({ relations: ['tramite'] });
   }
@@ -46,7 +94,21 @@ export class InmueblesService {
   }
 
   async update(id_inmueble: number, dto: UpdateInmuebleDto) {
-    await this.repo.update(id_inmueble, dto);
+    const exist = await this.repo.findOne({
+      where: { id: id_inmueble },
+    });
+
+    if (!exist) {
+      throw new NotFoundException(
+        `No se encontro inmueble con id ${id_inmueble} para actualizar`,
+      );
+    }
+    const { municipio_id, ...update_dto } = dto;
+    const municipio = await this.municipiosRepo.findOne({
+      where: { id: municipio_id },
+    });
+    if (!municipio) throw new NotFoundException('Municipios no encontrados');
+    await this.repo.update(id_inmueble, { ...update_dto, municipio });
     return this.findOne(id_inmueble);
   }
 

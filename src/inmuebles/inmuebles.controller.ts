@@ -20,6 +20,11 @@ export class InmueblesController {
     return this.inmueblesService.create(dto);
   }
 
+  @Post(':id')
+  createByTramite(@Param('id') id: number, @Body() dto: CreateInmuebleDto) {
+    return this.inmueblesService.createByTramite(id, dto);
+  }
+
   @Get()
   findAll() {
     return this.inmueblesService.findAll();
