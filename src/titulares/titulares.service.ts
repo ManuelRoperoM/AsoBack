@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Titular } from './entities/titulares.entity';
@@ -66,6 +70,25 @@ export class TitularesService {
   }
 
   async remove(id: number): Promise<void> {
+    const titular = await this.titularRepository.findOne({
+      where: { id },
+      relations: ['tramite'],
+    });
+
+    if (!titular) {
+      throw new NotFoundException(`No se encontro el titular a eliminar`);
+    }
+
+    const titulares = await this.titularRepository.find({
+      where: { tramite: { id: titular.tramite.id } },
+      relations: ['tramite'],
+    });
+
+    if (titulares.length < 2) {
+      throw new BadRequestException(
+        `El tramite debe tener asociado al menos un Titular`,
+      );
+    }
     await this.titularRepository.delete(id);
   }
 }
