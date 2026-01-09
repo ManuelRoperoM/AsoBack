@@ -11,6 +11,7 @@ import { AppController } from './app.controller';
 import { TramitesRelacionModule } from './tramites_relacion/tramites_relacion.module';
 import { SolicitantesTiposModule } from './solicitantes_tipos/solicitantes_tipos.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { UploadsModule } from './uploads/uploads.module';
 
     // 🔹 Conexión a MySQL usando variables del entorno
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
+      imports: [ConfigModule, ScheduleModule.forRoot()],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'mysql',

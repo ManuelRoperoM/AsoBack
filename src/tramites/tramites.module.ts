@@ -17,6 +17,9 @@ import { TitularesModule } from 'src/titulares/titulares.module';
 import { TrazabilidadService } from 'src/trazabilidad/trazabilidad.service';
 import { TrazabilidadModule } from 'src/trazabilidad/trazabilidad.module';
 import { Trazabilidad } from 'src/trazabilidad/entities/trazabilidad.entity';
+import { TramitesCacheJob } from 'src/jobs/cache-tramites.job';
+import { TramitesRepository } from './tramites.repositry';
+import { CacheModule } from 'src/cache/cache.module';
 
 @Module({
   imports: [
@@ -35,9 +38,16 @@ import { Trazabilidad } from 'src/trazabilidad/entities/trazabilidad.entity';
     DocumentosModule,
     TitularesModule,
     TrazabilidadModule,
+    CacheModule,
   ],
   controllers: [TramitesController],
-  providers: [TramitesService, InmueblesService, TrazabilidadService],
-  exports: [TramitesService],
+  providers: [
+    TramitesService,
+    InmueblesService,
+    TrazabilidadService,
+    TramitesCacheJob,
+    TramitesRepository,
+  ],
+  exports: [TramitesService, TramitesRepository],
 })
 export class TramitesModule {}

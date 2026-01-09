@@ -1,10 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToMany,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Tramite } from '../../tramites/entities/tramites.entity';
 import { Trazabilidad } from '../../trazabilidad/entities/trazabilidad.entity';
 import { Municipios } from '../../municipios/entities/municipios.entity';
