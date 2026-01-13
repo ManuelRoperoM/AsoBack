@@ -26,4 +26,15 @@ export class TramitesRepository {
       .orderBy('t.fecha_creacion', 'ASC')
       .getMany();
   }
+
+  async getAllHistoricalDays(): Promise<string[]> {
+    const rows = await this.repo
+      .createQueryBuilder('t')
+      .select("DATE_FORMAT(t.fecha_creacion, '%Y-%m-%d')", 'day')
+      .groupBy('day')
+      .orderBy('day', 'ASC')
+      .getRawMany();
+
+    return rows.map((r) => r.day);
+  }
 }

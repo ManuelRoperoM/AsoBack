@@ -52,8 +52,33 @@ export class TramitesCacheService {
     );
   }
 
-  // 👇 ESTE MÉTODO REEMPLAZA getHistorical
   async getHistorical(days: string[]): Promise<TramiteCache[]> {
     return this.getDays(days);
+  }
+
+  // Revisar si redis tiene algo
+  async hasAnyDay(): Promise<boolean> {
+    // const keys = await this.redis.keys('tramites:*');
+    const keys = await this.redis.keys('tramites:????-??-??');
+    return keys.length > 0;
+  }
+
+  async getAllCached(): Promise<TramiteCache[]> {
+    const keys = await this.redis.keys('tramites:*');
+    if (!keys.length) return [];
+
+    const values = await this.redis.mget(keys);
+    const result: TramiteCache[] = [];
+
+    values.forEach((v, i) => {
+      if (!v) return;
+      try {
+        result.push(...JSON.parse(v));
+      } catch {
+        this.redis.del(keys[i]); // limpia basura
+      }
+    });
+
+    return result;
   }
 }

@@ -6,6 +6,7 @@ import {
   OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
+  RelationId,
 } from 'typeorm';
 import { Usuario } from '../../usuarios/entities/usuario.entity';
 import { Inmueble } from '../../inmuebles/entities/inmuebles.entity';
@@ -30,11 +31,17 @@ export class Tramite {
   @ManyToOne(() => TramitesRelacion, { eager: true, nullable: false })
   tramiteRelacion: TramitesRelacion;
 
+  @RelationId((tramite: Tramite) => tramite.tramiteRelacion)
+  tramiteRelacionId: number;
+
   // 🔹 Solicitante (usuario que crea el trámite)
   @ManyToOne(() => Usuario, (usuario: Usuario) => usuario.tramitesSolicitados, {
     eager: true,
   })
   solicitante: Usuario;
+
+  @RelationId((tramite: Tramite) => tramite.solicitante)
+  solicitanteIdUsuario: number;
 
   // 🔹 Gestor asignado (usuario que gestiona el trámite)
   @ManyToOne(() => Usuario, (usuario: Usuario) => usuario.tramitesGestionados, {
@@ -42,6 +49,8 @@ export class Tramite {
     eager: true,
   })
   gestorAsignado: Usuario;
+  @RelationId((tramite: Tramite) => tramite.solicitante)
+  gestorAsignadoIdUsuario: number;
 
   // 🔹 Gestor auxiliar  (usuario que gestiona el trámite)
   @ManyToOne(() => Usuario, (usuario: Usuario) => usuario.tramitesGestionados, {
@@ -49,6 +58,8 @@ export class Tramite {
     eager: true,
   })
   gestorAuxiliar: Usuario;
+  @RelationId((tramite: Tramite) => tramite.solicitante)
+  gestorAuxiliarIdUsuario: number;
 
   // 🔹 Relación con inmuebles asociados al trámite
   @OneToMany(() => Inmueble, (inmueble: Inmueble) => inmueble.tramite, {
@@ -92,4 +103,6 @@ export class Tramite {
     },
   )
   solicitanteTipo: SolicitantesTipos;
+  @RelationId((tramite: Tramite) => tramite.solicitante)
+  solicitanteTipoId: number;
 }

@@ -25,9 +25,9 @@ import { Trazabilidad } from 'src/trazabilidad/entities/trazabilidad.entity';
 import { successResponse } from '../common/response/response.helper';
 import { Municipios } from 'src/municipios/entities/municipios.entity';
 import { TramiteCache } from 'src/cache/interfaces/tramite.cache.interface';
-import { subHours } from 'date-fns';
-import { getDaysBefore } from './utils/get-days-before';
-import { mapTramiteToCache } from './mappers/tramite-to-cache.mapper';
+// import { subHours } from 'date-fns';
+// import { getDaysBefore } from './utils/get-days-before';
+// import { mapTramiteToCache } from './mappers/tramite-to-cache.mapper';
 import { TramitesRepository } from './tramites.repositry';
 import { TramitesCacheService } from 'src/cache/tramites-cache.service';
 
@@ -536,13 +536,14 @@ export class TramitesService {
 
   // REDIS
   async getTramites(): Promise<TramiteCache[]> {
-    const frontera = subHours(new Date(), 24);
-    const days = getDaysBefore(frontera);
-    const historical = await this.cache.getDays(days);
-    const recentEntities = await this.repoTramite.getLast24h();
-    const recent = recentEntities.map(mapTramiteToCache);
+    // const frontera = subHours(new Date(), 24);
+    // const days = getDaysBefore(frontera);
+    // const historical = await this.cache.getDays(days);
+    // const recentEntities = await this.repoTramite.getLast24h();
+    // const recent = recentEntities.map(mapTramiteToCache);
 
-    return [...historical, ...recent];
+    // return [...historical, ...recent];
+    return this.cache.getAllCached();
   }
 
   async asignarGestorPorMunicipio(
